@@ -1,10 +1,12 @@
+# Импорт необходимых библиотек
 import os
 import sys
 
 import pygame
 
 
-def load_image(name, colorkey=None):
+# Создание вспомогательных функций
+def load_image(name, colorkey=None):  # функция для подгрузки изображений
     fullname = os.path.join('data/images', name)
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
@@ -21,30 +23,25 @@ def load_image(name, colorkey=None):
     return image
 
 
-def terminate():
-    pygame.quit()
-    sys.exit()
-
-
-def start_screen(screen, width, height):
+def start_screen(scr, width, height):  # функция для включения стартскрина
     intro_text = ["ЗАСТАВКА", "",
                   "Правила игры",
                   "Если в правилах несколько строк,",
                   "приходится выводить их построчно"]
 
     fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
-    screen.blit(fon, (0, 0))
+    scr.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
     clock = pygame.time.Clock()
-    for line in intro_text:
+    for line in intro_text:  # печать текста построчно
         string_rendered = font.render(line, 1, pygame.Color('black'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
         intro_rect.x = 10
         text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
+        scr.blit(string_rendered, intro_rect)
 
     while True:
         for event in pygame.event.get():
@@ -71,7 +68,6 @@ def load_level(filename):
 
 
 def generate_level(level):
-    # print("new")
     px = 0
     py = 0
     new_player, x, y = None, None, None
@@ -94,6 +90,10 @@ def generate_level(level):
     new_player = Player(px, py)
     return new_player, x, y
 
+
+def terminate(text=""):
+    pygame.quit()
+    sys.exit(text)
 
 
 FPS = 50
@@ -212,20 +212,23 @@ class Player(pygame.sprite.Sprite):
             tile_width * pos_x + 15, tile_height * pos_y + 6)
         self.last_moves = [(0, 0)]
         self.score = 0
+        self.stun = FPS * 3
 
     def move(self, m, n):
         global PLAYER_HP
         if PLAYER_HP > 0:
             self.rect = self.rect.move(m, n)
             self.last_moves.append((m, n))
-            if pygame.sprite.spritecollideany(self, enemy_group):
+            if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
                 if m or n:
                     self.rect = self.rect.move(-m, -n)
                     PLAYER_HP -= 1
+                    self.stun = FPS * 3
                 else:
                     self.rect = self.rect.move(self.last_moves[-1])
                     self.last_moves.remove(self.last_moves[-1])
                     PLAYER_HP -= 1
+                    self.stun = FPS * 3
             if pygame.sprite.spritecollideany(self, walls_group):
                 if m or n:
                     self.rect = self.rect.move(-m, -n)
@@ -237,12 +240,18 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         global PLAYER_HP
-        if pygame.sprite.spritecollideany(self, enemy_group):
+        if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
             self.rect = self.rect.move(-self.last_moves[-1][0], -self.last_moves[-1][1])
             self.last_moves.remove(self.last_moves[-1])
             PLAYER_HP -= 1
+            self.stun = FPS * 3
         if PLAYER_HP < 0:
             PLAYER_HP = 0
+        if not self.last_moves:
+            self.last_moves = [(0, 0)]
+        if self.stun > 0:
+            self.stun -= 1
+        print(self.stun)
 
 
 class Camera:
@@ -269,7 +278,3 @@ class Camera:
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
-
-
-
-
