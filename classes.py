@@ -215,7 +215,7 @@ class Player(pygame.sprite.Sprite):
 
     def move(self, m, n):
         global PLAYER_HP
-        if PLAYER_HP > 0:
+        if PLAYER_HP > 0 and self.stun < FPS * 2:
             self.rect = self.rect.move(m, n)
             self.last_moves.append((m, n))
             if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
