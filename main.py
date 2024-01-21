@@ -36,6 +36,8 @@ if __name__ == "__main__":
                     player.move(0, -50)
                 if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                     player.move(0, 50)
+                if event.key == pygame.K_ESCAPE:
+                    start_screen(screen, WIDTH, HEIGHT)
         # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
         screen.fill((0, 0, 0))
         all_sprites.draw(screen)

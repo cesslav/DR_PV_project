@@ -26,15 +26,15 @@ def load_image(name, colorkey=None):  # функция для подгрузки
 def start_screen(scr, width, height):  # функция для включения стартскрина
     intro_text = ["ЗАСТАВКА", "",
                   "Правила игры",
-                  "Если в правилах несколько строк,",
-                  "приходится выводить их построчно"]
+                  "Управление стрелками или WASD",
+                  "удар молотом на пробел"]
 
     fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
     scr.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
     clock = pygame.time.Clock()
-    for line in intro_text:  # печать текста построчно
+    for line in intro_text:  # построчная печать текста
         string_rendered = font.render(line, 1, pygame.Color('black'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
@@ -43,7 +43,7 @@ def start_screen(scr, width, height):  # функция для включени�
         text_coord += intro_rect.height
         scr.blit(string_rendered, intro_rect)
 
-    while True:
+    while True:  # ожидание нажатия для окончания стартскрина
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
@@ -51,27 +51,25 @@ def start_screen(scr, width, height):  # функция для включени�
                     event.type == pygame.MOUSEBUTTONDOWN:
                 return  # начинаем игру
         pygame.display.flip()
-        clock.tick(24)
+        clock.tick(24)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
 
 
-def load_level(filename):
+def load_level(filename):  # функция для предварительной обработки уровня
     filename = "data/levels/" + filename
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-
     # и подсчитываем максимальную длину
     max_width = max(map(len, level_map))
-
     # дополняем каждую строку пустыми клетками ('.')
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
-def generate_level(level):
+def generate_level(level):  # наполнение уровня
     px = 0
     py = 0
     new_player, x, y = None, None, None
-    for y in range(len(level)):
+    for y in range(len(level)):  # создание спрайтов уровня
         for x in range(len(level[y])):
             if level[y][x] == '.':
                 Empty('empty', x, y)
@@ -87,35 +85,36 @@ def generate_level(level):
                 Empty('empty', x, y)
                 GreenSnake(1, 1, x, y)
     # вернем игрока, а также размер поля в клетках
-    new_player = Player(px, py)
+    new_player = Player(px, py)  # создание игрока
     return new_player, x, y
 
 
-def terminate(text=""):
+def terminate(text=""):  # экстренный выход из программы
     pygame.quit()
     sys.exit(text)
 
 
+# создание констант и инициализация библиотеки pygame
 FPS = 50
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
 PLAYER_HP = 10
 screen = pygame.display.set_mode(SCREEN_SIZE)
+tile_images = {
+               'wall': load_image('box.png'),
+               'empty': load_image('grass.png'),
+               'diamond': load_image('diamond.png', -1)
+               }
+player_image = load_image('player.png')
+tile_width = tile_height = 50
 pygame.init()
 
+# создание групп спрайтов для более удобного обращения со спрайтами
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 walls_group = pygame.sprite.Group()
 diamonds_group = pygame.sprite.Group()
-
-tile_images = {
-    'wall': load_image('box.png'),
-    'empty': load_image('grass.png'),
-    'diamond': load_image('diamond.png', -1)
-}
-player_image = load_image('player.png')
-tile_width = tile_height = 50
 
 
 class GreenSnake(pygame.sprite.Sprite):
