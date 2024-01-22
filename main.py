@@ -9,8 +9,8 @@ from classes import Camera, PlayerHP, screen, all_sprites, enemy_group, player_g
 # Вход в программу(нужен на случай добавления внешних функций или переменных в этот файл).
 if __name__ == "__main__":
     start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
-    connection = sqlite3.connect("data/inf/saves.db")
-    cursor = connection.cursor()
+    # connection = sqlite3.connect("data/inf/saves.db")
+    # cursor = connection.cursor()
     # Локальные объекты и функции, которые больше нигде не понадобятся.
     clock = pygame.time.Clock()
     running = True

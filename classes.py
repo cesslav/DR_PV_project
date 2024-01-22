@@ -83,7 +83,10 @@ def generate_level(level):  # наполнение уровня
                 Diamond(x, y)
             elif level[y][x] == 'g':
                 Empty('empty', x, y)
-                GreenSnake(1, 1, x, y)
+                GreenSnake(9, 12, x, y, 'g')
+            elif level[y][x] == 'q':
+                Empty('empty', x, y)
+                GreenSnake(9, 12, x, y, 'q')
     # вернем игрока, а также размер поля в клетках
     new_player = Player(px, py)  # создание игрока
     return new_player, x, y
@@ -118,16 +121,23 @@ diamonds_group = pygame.sprite.Group()
 
 
 class GreenSnake(pygame.sprite.Sprite):
-    def __init__(self, columns, rows, x, y):
+    def __init__(self, columns, rows, x, y, snake_type='g'):
         super().__init__(all_sprites, enemy_group)
         self.frames = []
-        sheet = load_image('box.png', -1)
+        sheet = load_image('snakes.png', -1)
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(x * tile_width, y * tile_height)
-        self.direction_x = 1
-        self.direction_y = 0
+
+        # Убираем случайное изменение направления
+        if snake_type == 'q':
+            self.direction_x = 0  # Направление по горизонтали для 'q'
+            self.direction_y = 1  # Направление вверх для 'q'
+        else:
+            self.direction_x = 1  # Направление вправо для 'g'
+            self.direction_y = 0  # Направление по вертикали для 'g'
+
         self.update_load = 0
 
     def cut_sheet(self, sheet, columns, rows):
