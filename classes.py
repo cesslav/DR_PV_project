@@ -102,15 +102,17 @@ def start_screen(scr, width, height):  # функция для включени�
     intro_text = ["ЗАСТАВКА", "",
                   "Правила игры",
                   "Управление стрелками или WASD",
-                  "удар молотом на пробел"]
+                  "удар молотом на пробел",
+                  "q для быстрого сохранения",
+                  "e для быстрой загрузки"]
 
     fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
     scr.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
+    font = pygame.font.Font(None, 47)
     text_coord = 50
     clock = pygame.time.Clock()
     for line in intro_text:  # построчная печать текста
-        string_rendered = font.render(line, 1, pygame.Color('black'))
+        string_rendered = font.render(line, 1, pygame.Color("#BD0D9E"))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
