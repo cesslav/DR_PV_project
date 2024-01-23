@@ -31,6 +31,7 @@ def save_game(score):
     cursor.execute("""DELETE FROM SavesData WHERE Save_Id = 1""")
     cursor.execute("""DELETE FROM GameVars WHERE Save_ID = 1""")
     cursor.execute("""DELETE FROM ObjectProp WHERE Save_ID = 1""")
+    connection.commit()
     cursor.execute("""
         INSERT INTO SavesData
         VALUES (?,?,?)
@@ -81,7 +82,7 @@ def load_game():
         elif information[0] == "Diamond":
             Diamond(information[1] / 50, information[2] / 50)
         elif information[0] == "GreenSnake":
-            GreenSnake(1, 1, information[1] / 50, information[2] / 50,
+            GreenSnake(information[1] / 50, information[2] / 50,
                        information[3], information[4], information[5])
     data = cursor.execute("""
             SELECT VarName, VarVal
@@ -157,7 +158,10 @@ def generate_level(level):  # наполнение уровня
                 Diamond(x, y)
             elif level[y][x] == 'g':
                 Empty('empty', x, y)
-                GreenSnake(1, 1, x, y)
+                GreenSnake(x, y, snake_type='g')
+            elif level[y][x] == 'q':
+                Empty('empty', x, y)
+                GreenSnake(x, y, snake_type='q')
     # вернем игрока, а также размер поля в клетках
     new_player = Player(px, py)  # создание игрока
     return new_player, x, y
@@ -178,7 +182,7 @@ tile_images = {
                'empty': load_image('grass.png'),
                'diamond': load_image('diamond.png', -1)
                }
-player_image = load_image('diamond.png')
+player_image = load_image('player.png', -1)
 tile_width = tile_height = 50
 pygame.init()
 
@@ -192,20 +196,29 @@ diamonds_group = pygame.sprite.Group()
 
 
 class GreenSnake(pygame.sprite.Sprite):
-    def __init__(self, columns, rows, x, y, dirx=1, diry=0, stun=0):
+    def __init__(self, x, y, dirx=1, diry=0, stun=0, snake_type=None):
         super().__init__(all_sprites, enemy_group)
         self.frames = []
-        sheet = load_image('box.png', -1)
-        self.cut_sheet(sheet, columns, rows)
+        sheet = load_image('snakes.png', -1)
+        self.cut_sheet(sheet)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(x * tile_width, y * tile_height)
         self.direction_x = dirx
         self.direction_y = diry
+        # Убираем случайное изменение направления
+        if snake_type:
+            if snake_type == 'q':
+                self.direction_x = 0  # Направление по горизонтали для 'q'
+                self.direction_y = 1  # Направление вверх для 'q'
+            else:
+                self.direction_x = 1  # Направление вправо для 'g'
+                self.direction_y = 0  # Направление по вертикали для 'g'
+
         self.update_load = 0
         self.stun = stun
 
-    def cut_sheet(self, sheet, columns, rows):
+    def cut_sheet(self, sheet, columns=9, rows=12):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
                                 sheet.get_height() // rows)
         for j in range(rows):
