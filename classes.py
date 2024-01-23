@@ -1,6 +1,8 @@
 # Импорт необходимых библиотек
 import os
+import sqlite3
 import sys
+from datetime import datetime
 
 import pygame
 
@@ -21,6 +23,78 @@ def load_image(name, colorkey=None):  # функция для подгрузки
     else:
         image = image.convert_alpha()
     return image
+
+
+def save_game(score):
+    connection = sqlite3.connect("saves.db")
+    cursor = connection.cursor()
+    cursor.execute("""DELETE FROM SavesData WHERE Save_Id = 1""")
+    cursor.execute("""DELETE FROM GameVars WHERE Save_ID = 1""")
+    cursor.execute("""DELETE FROM ObjectProp WHERE Save_ID = 1""")
+    cursor.execute("""
+        INSERT INTO SavesData
+        VALUES (?,?,?)
+        """, (1, str(datetime.now())[11:16], "quick save"))
+    for sprite in all_sprites:
+        if not isinstance(sprite, PlayerHP) and not isinstance(sprite, Camera):
+            cursor.execute("""
+                    INSERT INTO ObjectProp
+                    VALUES (?,?,?,?,?,?,?)
+                    """, sprite.save())
+    cursor.execute("""
+                                INSERT INTO GameVars
+                                VALUES (?,?,?)
+                                """, (1, "player_hp", player_hp))
+    cursor.execute("""
+                                    INSERT INTO GameVars
+                                    VALUES (?,?,?)
+                                    """, (1, "score", score))
+    connection.commit()
+    connection.close()
+
+
+def load_game():
+    global player_hp
+    connection = sqlite3.connect("saves.db")
+    cursor = connection.cursor()
+    data = cursor.execute("""
+        SELECT ObjectType, ObjectX, ObjectY, ObjectDirX, ObjectDirY, ObjectState
+        FROM ObjectProp
+        WHERE Save_Id = 1
+        """).fetchall()
+
+    for sprite in all_sprites:
+        sprite.kill()
+
+    px = 0
+    py = 0
+    stun = 0
+    for information in data:
+        if information[0] == "Empty":
+            Empty('empty', information[1] / 50, information[2] / 50)
+        elif information[0] == "Wall":
+            Wall('wall', information[1] / 50, information[2] / 50)
+        elif information[0] == "Player":
+            px, py, stun = information[1], information[2], information[5]
+            if stun > FPS * 2:
+                stun = FPS * 2
+        elif information[0] == "Diamond":
+            Diamond(information[1] / 50, information[2] / 50)
+        elif information[0] == "GreenSnake":
+            GreenSnake(1, 1, information[1] / 50, information[2] / 50,
+                       information[3], information[4], information[5])
+    data = cursor.execute("""
+            SELECT VarName, VarVal
+            FROM GameVars
+            WHERE Save_Id = 1
+            """).fetchall()
+    for information in data:
+        if information[0] == "player_hp":
+            player_hp = information[1]
+        if information[0] == "score":
+            score = information[1]
+    connection.close()
+    return Camera(), Player(px, py, stun), PlayerHP(), score
 
 
 def start_screen(scr, width, height):  # функция для включения стартскрина
@@ -83,10 +157,7 @@ def generate_level(level):  # наполнение уровня
                 Diamond(x, y)
             elif level[y][x] == 'g':
                 Empty('empty', x, y)
-                GreenSnake(9, 12, x, y, 'g')
-            elif level[y][x] == 'q':
-                Empty('empty', x, y)
-                GreenSnake(9, 12, x, y, 'q')
+                GreenSnake(1, 1, x, y)
     # вернем игрока, а также размер поля в клетках
     new_player = Player(px, py)  # создание игрока
     return new_player, x, y
@@ -100,14 +171,14 @@ def terminate(text=""):  # экстренный выход из программ
 # создание констант и инициализация библиотеки pygame
 FPS = 50
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
-PLAYER_HP = 10
+player_hp = 10
 screen = pygame.display.set_mode(SCREEN_SIZE)
 tile_images = {
                'wall': load_image('box.png'),
                'empty': load_image('grass.png'),
                'diamond': load_image('diamond.png', -1)
                }
-player_image = load_image('player.png')
+player_image = load_image('diamond.png')
 tile_width = tile_height = 50
 pygame.init()
 
@@ -121,24 +192,18 @@ diamonds_group = pygame.sprite.Group()
 
 
 class GreenSnake(pygame.sprite.Sprite):
-    def __init__(self, columns, rows, x, y, snake_type='g'):
+    def __init__(self, columns, rows, x, y, dirx=1, diry=0, stun=0):
         super().__init__(all_sprites, enemy_group)
         self.frames = []
-        sheet = load_image('snakes.png', -1)
+        sheet = load_image('box.png', -1)
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(x * tile_width, y * tile_height)
-
-        # Убираем случайное изменение направления
-        if snake_type == 'q':
-            self.direction_x = 0  # Направление по горизонтали для 'q'
-            self.direction_y = 1  # Направление вверх для 'q'
-        else:
-            self.direction_x = 1  # Направление вправо для 'g'
-            self.direction_y = 0  # Направление по вертикали для 'g'
-
+        self.direction_x = dirx
+        self.direction_y = diry
         self.update_load = 0
+        self.stun = stun
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
@@ -148,6 +213,9 @@ class GreenSnake(pygame.sprite.Sprite):
                 frame_location = (self.rect.w * i, self.rect.h * j)
                 self.frames.append(sheet.subsurface(pygame.Rect(
                     frame_location, self.rect.size)))
+
+    def save(self):
+        return self.__class__.__name__, self.rect.x, self.rect.y, self.direction_x, self.direction_y, self.stun, 1
 
     def move(self):
         m = self.direction_x * tile_width
@@ -172,6 +240,9 @@ class Wall(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y)
         self.add(walls_group)
 
+    def save(self):
+        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
+
 
 class Diamond(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
@@ -179,6 +250,9 @@ class Diamond(pygame.sprite.Sprite):
         self.image = tile_images['diamond']
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
+
+    def save(self):
+        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
 
 
 class Empty(pygame.sprite.Sprite):
@@ -188,9 +262,12 @@ class Empty(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
 
+    def save(self):
+        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
+
 
 class PlayerHP(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows):
+    def __init__(self, sheet=load_image('hp.png', -1), columns=11, rows=1):
         super().__init__(all_sprites, player_group)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
@@ -208,35 +285,36 @@ class PlayerHP(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self):
-        self.cur_frame = 10 - PLAYER_HP
+        self.cur_frame = 10 - player_hp
         self.image = self.frames[self.cur_frame]
         pass
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
+    def __init__(self, pos_x, pos_y, stun=0, loading=FPS * 2):
         super().__init__(player_group, all_sprites)
         self.image = player_image
         self.rect = self.image.get_rect().move(
-            tile_width * pos_x + 15, tile_height * pos_y + 6)
+            tile_width * pos_x, tile_height * pos_y)
         self.last_moves = [(0, 0)]
         self.score = 0
-        self.stun = FPS * 3
+        self.stun = stun
+        self.loading = loading
 
     def move(self, m, n):
-        global PLAYER_HP
-        if PLAYER_HP > 0 and self.stun < FPS * 2:
+        global player_hp
+        if player_hp > 0 and self.stun < FPS * 2 and self.loading == 0:
             self.rect = self.rect.move(m, n)
             self.last_moves.append((m, n))
             if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
                 if m or n:
                     self.rect = self.rect.move(-m, -n)
-                    PLAYER_HP -= 1
+                    player_hp -= 1
                     self.stun = FPS * 3
                 else:
                     self.rect = self.rect.move(self.last_moves[-1])
                     self.last_moves.remove(self.last_moves[-1])
-                    PLAYER_HP -= 1
+                    player_hp -= 1
                     self.stun = FPS * 3
             if pygame.sprite.spritecollideany(self, walls_group):
                 if m or n:
@@ -247,40 +325,48 @@ class Player(pygame.sprite.Sprite):
             if pygame.sprite.spritecollide(self, diamonds_group, True):
                 self.score += 1
 
+    def save(self):
+        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, self.stun, 1
+
+    def extra_move(self, m):
+        self.rect = self.rect.move(m, m)
+
     def update(self):
-        global PLAYER_HP
+        global player_hp
         if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
             self.rect = self.rect.move(-self.last_moves[-1][0], -self.last_moves[-1][1])
             self.last_moves.remove(self.last_moves[-1])
-            PLAYER_HP -= 1
+            player_hp -= 1
             self.stun = FPS * 3
-        if PLAYER_HP < 0:
-            PLAYER_HP = 0
+        if player_hp < 0:
+            player_hp = 0
         if not self.last_moves:
             self.last_moves = [(0, 0)]
-        if self.stun > 0:
+        if self.stun > 0 and self.loading == 0:
             self.stun -= 1
-        print(self.stun)
+        if self.loading > 0:
+            self.loading -= 1
+
 
 
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
-        self.dx = 0
-        self.dy = 0
+        self.dx = -3
+        self.dy = -3
 
     # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
 
-        if -5 > obj.rect.x:
+        if -1 > obj.rect.x:
             obj.rect.x += WIDTH
-        elif obj.rect.x > WIDTH - 5:
+        elif obj.rect.x > WIDTH - 1:
             obj.rect.x -= WIDTH
-        if -5 > obj.rect.y:
+        if -1 > obj.rect.y:
             obj.rect.y += HEIGHT
-        elif obj.rect.y > HEIGHT - 5:
+        elif obj.rect.y > HEIGHT - 1:
             obj.rect.y -= HEIGHT
 
     # позиционировать камеру на объекте target

@@ -1,16 +1,13 @@
 # импорты необходимых библиотек и функций
-import sqlite3
 
 import pygame
 
 from classes import Camera, PlayerHP, screen, all_sprites, enemy_group, player_group, walls_group, WIDTH, HEIGHT, FPS, \
-    load_image, generate_level, load_level, start_screen, terminate
+    load_image, generate_level, load_level, start_screen, terminate, save_game, load_game
 
 # Вход в программу(нужен на случай добавления внешних функций или переменных в этот файл).
 if __name__ == "__main__":
     start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
-    # connection = sqlite3.connect("data/inf/saves.db")
-    # cursor = connection.cursor()
     # Локальные объекты и функции, которые больше нигде не понадобятся.
     clock = pygame.time.Clock()
     running = True
@@ -42,6 +39,11 @@ if __name__ == "__main__":
                     player.move(0, 50)
                 if event.key == pygame.K_ESCAPE:
                     start_screen(screen, WIDTH, HEIGHT)
+                if event.key == pygame.K_q:
+                    save_game(player.score)
+                if event.key == pygame.K_e:
+                    camera, player, hp, player.score = load_game()
+                    player.extra_move(-150)
         # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
         screen.fill((0, 0, 0))
         all_sprites.draw(screen)
@@ -49,8 +51,8 @@ if __name__ == "__main__":
         walls_group.draw(screen)
         player_group.draw(screen)
         screen.blit(font1.render(f"SCORE {player.score}", 1, pygame.Color('red')), (0, 25, 100, 10))
-        from classes import PLAYER_HP
-        if PLAYER_HP == 0:
+        from classes import player_hp
+        if player_hp == 0:
             screen.blit(font2.render("Game Over", 1,
                                      pygame.Color('red')), (WIDTH // 2 - 25, HEIGHT // 2 - 25, 100, 100))
         pygame.display.flip()
