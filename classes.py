@@ -12,8 +12,7 @@ def load_image(name, colorkey=None):  # функция для подгрузки
     fullname = os.path.join('data/images', name)
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
+        terminate(f"Файл с изображением '{fullname}' не найден")
     image = pygame.image.load(fullname)
     if colorkey is not None:
         image = image.convert()
@@ -23,6 +22,16 @@ def load_image(name, colorkey=None):  # функция для подгрузки
     else:
         image = image.convert_alpha()
     return image
+
+
+def load_sound(name):  # функция для подгрузки музыки
+    fullname = os.path.join('data/sounds', name)
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        terminate(f"Файл с музыкой '{fullname}' не найден")
+    pygame.mixer.music.load(fullname)
+    pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(0.2)
 
 
 def save_game(score):

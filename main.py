@@ -1,14 +1,18 @@
 # импорты необходимых библиотек и функций
+import os
 
 import pygame
 
 from classes import Camera, PlayerHP, screen, all_sprites, enemy_group, player_group, walls_group, WIDTH, HEIGHT, FPS, \
-    load_image, generate_level, load_level, start_screen, terminate, save_game, load_game
+    load_image, generate_level, load_level, start_screen, terminate, save_game, load_game, load_sound
 
 # Вход в программу(нужен на случай добавления внешних функций или переменных в этот файл).
 if __name__ == "__main__":
     start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
     # Локальные объекты и функции, которые больше нигде не понадобятся.
+    # pygame.mixer.music.load("/data/sounds/background.mp3")
+    load_sound("background.mp3")
+    s = pygame.mixer.Sound(os.path.join('data/sounds', "game_over.mp3"))
     clock = pygame.time.Clock()
     running = True
     pygame.display.set_caption("DMPV")
@@ -16,6 +20,7 @@ if __name__ == "__main__":
     hp = PlayerHP(load_image('hp.png', -1), 11, 1)
     font1 = pygame.font.Font(None, 20)
     font2 = pygame.font.Font(None, 50)
+    death_switch = True
     # Выбор, загрузка уровня и безопасный выход в случае ошибки
     # (в будущем будет добавлено автоотправление письма-фидбека о баге)
     try:
@@ -55,6 +60,10 @@ if __name__ == "__main__":
         if player_hp == 0:
             screen.blit(font2.render("Game Over", 1,
                                      pygame.Color('red')), (WIDTH // 2 - 25, HEIGHT // 2 - 25, 100, 100))
+            if death_switch:
+                pygame.mixer.music.stop()
+                s.play()
+                death_switch = False
         pygame.display.flip()
         clock.tick(FPS)
         # Обновление всех спрайтов
