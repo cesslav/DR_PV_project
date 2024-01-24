@@ -6,6 +6,8 @@ from datetime import datetime
 
 import pygame
 
+diamonds_left = 100
+
 
 # Создание вспомогательных функций
 def load_image(name, colorkey=None):  # функция для подгрузки изображений
@@ -32,6 +34,27 @@ def load_sound(name):  # функция для подгрузки музыки
     pygame.mixer.music.load(fullname)
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.2)
+
+
+def add_to_leaderboard(time, diamonds_collected, user_name="John Doe"):
+    connection = sqlite3.connect("Leaderboard.db")
+    cursor = connection.cursor()
+    lead_id = cursor.execute("""
+        SELECT ID
+        FROM leaders
+        """).fetchall()
+    max_id = []
+    for i in lead_id:
+        max_id.append(i[0])
+    max_id = max(max_id) + 1
+    cursor.execute("""
+        INSERT INTO leaders
+        VALUES (?,?,?,?,?)
+        """, (max_id, user_name,
+              str(datetime.now())[11:16],
+              time, diamonds_collected))
+    connection.commit()
+    connection.close()
 
 
 def save_game(score):
@@ -65,6 +88,7 @@ def save_game(score):
 
 def load_game():
     global player_hp
+    global diamonds_left
     connection = sqlite3.connect("saves.db")
     cursor = connection.cursor()
     data = cursor.execute("""
@@ -79,6 +103,7 @@ def load_game():
     px = 0
     py = 0
     stun = 0
+    diamonds_left = 0
     for information in data:
         if information[0] == "Empty":
             Empty('empty', information[1] / 50, information[2] / 50)
@@ -90,6 +115,7 @@ def load_game():
                 stun = FPS * 2
         elif information[0] == "Diamond":
             Diamond(information[1] / 50, information[2] / 50)
+            diamonds_left += 1
         elif information[0] == "GreenSnake":
             GreenSnake(information[1] / 50, information[2] / 50,
                        information[3], information[4], information[5])
@@ -152,8 +178,10 @@ def load_level(filename):  # функция для предварительно�
 
 
 def generate_level(level):  # наполнение уровня
+    global diamonds_left
     px = 0
     py = 0
+    diamonds_left = 0
     new_player, x, y = None, None, None
     for y in range(len(level)):  # создание спрайтов уровня
         for x in range(len(level[y])):
@@ -167,6 +195,7 @@ def generate_level(level):  # наполнение уровня
             elif level[y][x] == 'd':
                 Empty('empty', x, y)
                 Diamond(x, y)
+                diamonds_left += 1
             elif level[y][x] == 'g':
                 Empty('empty', x, y)
                 GreenSnake(x, y, snake_type='g')
@@ -327,19 +356,20 @@ class Player(pygame.sprite.Sprite):
 
     def move(self, m, n):
         global player_hp
-        if player_hp > 0 and self.stun < FPS * 2 and self.loading == 0:
+        global diamonds_left
+        if player_hp > 0 and self.stun < FPS * 0.5 and self.loading == 0:
             self.rect = self.rect.move(m, n)
             self.last_moves.append((m, n))
             if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
                 if m or n:
                     self.rect = self.rect.move(-m, -n)
                     player_hp -= 1
-                    self.stun = FPS * 3
+                    self.stun = FPS * 1
                 else:
                     self.rect = self.rect.move(self.last_moves[-1])
                     self.last_moves.remove(self.last_moves[-1])
                     player_hp -= 1
-                    self.stun = FPS * 3
+                    self.stun = FPS * 1
             if pygame.sprite.spritecollideany(self, walls_group):
                 if m or n:
                     self.rect = self.rect.move(-m, -n)
@@ -348,6 +378,7 @@ class Player(pygame.sprite.Sprite):
                     self.last_moves.remove(self.last_moves[-1])
             if pygame.sprite.spritecollide(self, diamonds_group, True):
                 self.score += 1
+                diamonds_left -= 1
 
     def save(self):
         return self.__class__.__name__, self.rect.x, self.rect.y, None, None, self.stun, 1
@@ -355,13 +386,17 @@ class Player(pygame.sprite.Sprite):
     def extra_move(self, m):
         self.rect = self.rect.move(m, m)
 
+    def death(self):
+        global player_hp
+        player_hp = 0
+
     def update(self):
         global player_hp
         if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
             self.rect = self.rect.move(-self.last_moves[-1][0], -self.last_moves[-1][1])
             self.last_moves.remove(self.last_moves[-1])
             player_hp -= 1
-            self.stun = FPS * 3
+            self.stun = FPS * 1
         if player_hp < 0:
             player_hp = 0
         if not self.last_moves:
@@ -370,7 +405,6 @@ class Player(pygame.sprite.Sprite):
             self.stun -= 1
         if self.loading > 0:
             self.loading -= 1
-
 
 
 class Camera:
