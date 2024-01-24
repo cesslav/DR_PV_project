@@ -16,6 +16,7 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     running = True
     pygame.display.set_caption("DMPV")
+    pygame.display.set_icon(load_image("player.png", -1))
     camera = Camera()
     hp = PlayerHP(load_image('hp.png', -1), 11, 1)
     font1 = pygame.font.Font(None, 20)
@@ -59,7 +60,7 @@ if __name__ == "__main__":
         from classes import player_hp
         if player_hp == 0:
             screen.blit(font2.render("Game Over", 1,
-                                     pygame.Color('red')), (WIDTH // 2 - 25, HEIGHT // 2 - 25, 100, 100))
+                                     pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
             if death_switch:
                 pygame.mixer.music.stop()
                 s.play()
