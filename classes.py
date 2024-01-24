@@ -259,13 +259,11 @@ class GreenSnake(pygame.sprite.Sprite):
         self.stun = stun
 
     def cut_sheet(self, sheet, columns=9, rows=12):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
         for j in range(rows):
             for i in range(columns):
                 frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
 
     def save(self):
         return self.__class__.__name__, self.rect.x, self.rect.y, self.direction_x, self.direction_y, self.stun, 1
@@ -283,6 +281,11 @@ class GreenSnake(pygame.sprite.Sprite):
         self.update_load += 1
         if self.update_load % 30 == 0:
             self.move()
+            if self.direction_x == 1:
+                self.cur_frame = (self.cur_frame - 1) % 8  # движение вправо (колонки с 9 по 2)
+            elif self.direction_x == -1:
+                self.cur_frame = (self.cur_frame + 1) % 8  # движение влево (колонки с 9 по 2)
+            self.image = self.frames[self.cur_frame]
 
 
 class Wall(pygame.sprite.Sprite):
