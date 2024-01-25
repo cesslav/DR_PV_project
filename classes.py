@@ -7,8 +7,14 @@ import pygame
 
 
 # Создание вспомогательных функций
+def resource_path(relative):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative)
+    return os.path.join(relative)
+
+
 def load_image(name, colorkey=None):  # функция для подгрузки изображений
-    fullname = os.path.join('data/images', name)
+    fullname = resource_path(os.path.join('data/images', name))
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
         terminate(f"Файл с изображением '{fullname}' не найден")
@@ -24,7 +30,7 @@ def load_image(name, colorkey=None):  # функция для подгрузки
 
 
 def load_sound(name):  # функция для подгрузки музыки
-    fullname = os.path.join('data/sounds', name)
+    fullname = resource_path(os.path.join('data/sounds', name))
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
         terminate(f"Файл с музыкой '{fullname}' не найден")
@@ -167,7 +173,7 @@ def start_screen(scr, width, height):  # функция для включени�
 
 
 def load_level(filename):  # функция для предварительной обработки уровня
-    filename = "data/levels/" + filename
+    filename = resource_path("data/levels/" + filename)
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
@@ -214,10 +220,12 @@ def terminate(text=""):  # экстренный выход из программ
 
 # создание констант и инициализация библиотеки pygame
 FPS = 50
+diamonds_left = 0
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
 player_hp = 10
 screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
+log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
 tile_images = {
                'wall': load_image('box.png'),
                'empty': load_image('grass.png'),

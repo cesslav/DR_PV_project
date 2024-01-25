@@ -1,14 +1,14 @@
+# -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 from datetime import datetime
 import os
 import pygame
 from classes import Camera, PlayerHP, screen, all_sprites, enemy_group, player_group, \
     walls_group, WIDTH, HEIGHT, FPS, load_image, generate_level, load_level, start_screen, \
-    terminate, save_game, load_game, load_sound, add_to_leaderboard, log_file
+    terminate, save_game, load_game, load_sound, add_to_leaderboard, log_file, resource_path
 
 
-# Вход в программу(нужен на случай добавления внешних функций или переменных в этот файл).
-if __name__ == "__main__":
+def main():
     start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
     # Локальные объекты и функции, которые больше нигде не понадобятся.
     # pygame.mixer.music.load("/data/sounds/background.mp3")
@@ -98,3 +98,9 @@ if __name__ == "__main__":
                 time_delta = (pygame.time.get_ticks() - time_delta) / 1000
     # корректный выход из программы при завершении цикла
     pygame.quit()
+
+
+# Вход в программу(нужен на случай добавления внешних функций или переменных в этот файл).
+if __name__ == "__main__":
+    main()
+
