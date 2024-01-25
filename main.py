@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 import os
-import sqlite3
+from db_class import DBClass
 import sys
 from datetime import datetime
 import pygame
@@ -353,101 +353,6 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
-class DBClass():
-    def __init__(self):
-        self.connection = sqlite3.connect("saves.db")
-        self.cursor = self.connection.cursor()
-
-    def add_to_leaderboard(self, time, diamonds_collected, user_name="John Doe"):
-        lead_id = self.cursor.execute("""
-            SELECT ID
-            FROM leaders
-            """).fetchall()
-        max_id = []
-        for i in lead_id:
-            max_id.append(i[0])
-        max_id = max(max_id) + 1
-        self.cursor.execute("""
-            INSERT INTO Leaders
-            VALUES (?,?,?,?,?)
-            """, (max_id, user_name,
-                  str(datetime.now())[11:16],
-                  time, diamonds_collected))
-        self.connection.commit()
-        log_file.write(f"[{str(datetime.now())[11:16]}]: winner added to leaderboard as {user_name}\n")
-
-    def save_game(self, score):
-        self.cursor.execute("""DELETE FROM SavesData WHERE Save_Id = 1""")
-        self.cursor.execute("""DELETE FROM GameVars WHERE Save_ID = 1""")
-        self.cursor.execute("""DELETE FROM ObjectProp WHERE Save_ID = 1""")
-        self.connection.commit()
-        self.cursor.execute("""
-            INSERT INTO SavesData
-            VALUES (?,?,?)
-            """, (1, str(datetime.now())[11:16], "quick save"))
-        for sprite in all_sprites:
-            if not isinstance(sprite, PlayerHP) and not isinstance(sprite, Camera):
-                self.cursor.execute("""
-                        INSERT INTO ObjectProp
-                        VALUES (?,?,?,?,?,?,?)
-                        """, sprite.save())
-        self.cursor.execute("""
-                                    INSERT INTO GameVars
-                                    VALUES (?,?,?)
-                                    """, (1, "player_hp", player_hp))
-        self.cursor.execute("""
-                                        INSERT INTO GameVars
-                                        VALUES (?,?,?)
-                                        """, (1, "score", score))
-        self.connection.commit()
-        log_file.write(f"[{str(datetime.now())[11:16]}]: game saved to save file\n")
-
-    def load_game(self):
-        global player_hp
-        global diamonds_left
-        data = self.cursor.execute("""
-            SELECT ObjectType, ObjectX, ObjectY, ObjectDirX, ObjectDirY, ObjectState
-            FROM ObjectProp
-            WHERE Save_Id = 1
-            """).fetchall()
-
-        for sprite in all_sprites:
-            sprite.kill()
-
-        px = 0
-        py = 0
-        stun = 0
-        diamonds_left = 0
-        for information in data:
-            if information[0] == "Empty":
-                Empty('empty', information[1] / 50, information[2] / 50)
-            elif information[0] == "Wall":
-                Wall('wall', information[1] / 50, information[2] / 50)
-            elif information[0] == "Player":
-                px, py, stun = information[1], information[2], information[5]
-                if stun > FPS * 2:
-                    stun = FPS * 2
-            elif information[0] == "Diamond":
-                Diamond(information[1] / 50, information[2] / 50)
-                diamonds_left += 1
-            elif information[0] == "GreenSnake":
-                GreenSnake(information[1] / 50, information[2] / 50,
-                           information[3], information[4], information[5])
-        data = self.cursor.execute("""
-                SELECT VarName, VarVal
-                FROM GameVars
-                WHERE Save_Id = 1
-                """).fetchall()
-        for information in data:
-            if information[0] == "player_hp":
-                player_hp = information[1]
-            if information[0] == "score":
-                score = information[1]
-        self.connection.close()
-        log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
-        return Camera(), Player(px, py, stun), PlayerHP(), score
-
-
 def main():
     start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
     # Локальные объекты и функции, которые больше нигде не понадобятся.
@@ -467,6 +372,7 @@ def main():
     log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
     try:
         player, level_x, level_y = generate_level(load_level(f"level{(int(input('Введите номер уровня: ')))}.txt"))
+        db = DBClass('saves.db')
     except Exception as e:
         log_file.write(f"[{str(datetime.now())[11:16]}]: program finished with error {e}\n")
         log_file.close()
@@ -492,9 +398,9 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     start_screen(screen, WIDTH, HEIGHT)
                 if event.key == pygame.K_q:
-                    save_game(player.score)
+                    db.save_game(player.score)
                 if event.key == pygame.K_e:
-                    camera, player, hp, player.score = load_game()
+                    camera, player, hp, player.score = db.load_game()
                     player.extra_move(-150)
         # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
         screen.fill((0, 0, 0))
@@ -529,7 +435,7 @@ def main():
         if diamonds_left == 0:
             player.death()
             if death_switch:
-                add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
+                db.add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
                 log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is win\n")
                 log_file.write(f"[{str(datetime.now())[11:16]}]: game end "
                                f"with time {(pygame.time.get_ticks() - time_delta) / 1000}\n")
