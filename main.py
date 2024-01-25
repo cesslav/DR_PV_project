@@ -1,11 +1,11 @@
 # импорты необходимых библиотек и функций
+from datetime import datetime
 import os
-
 import pygame
+from classes import Camera, PlayerHP, screen, all_sprites, enemy_group, player_group, \
+    walls_group, WIDTH, HEIGHT, FPS, load_image, generate_level, load_level, start_screen, \
+    terminate, save_game, load_game, load_sound, add_to_leaderboard, log_file
 
-from classes import Camera, PlayerHP, screen, all_sprites, enemy_group, player_group, walls_group, WIDTH, HEIGHT, FPS, \
-    load_image, generate_level, load_level, start_screen, terminate, save_game, load_game, load_sound, \
-    add_to_leaderboard
 
 # Вход в программу(нужен на случай добавления внешних функций или переменных в этот файл).
 if __name__ == "__main__":
@@ -24,14 +24,18 @@ if __name__ == "__main__":
     death_switch = True
     # Выбор, загрузка уровня и безопасный выход в случае ошибки
     # (в будущем будет добавлено автоотправление письма-фидбека о баге)
+    log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
     try:
         player, level_x, level_y = generate_level(load_level(f"level{(int(input('Введите номер уровня: ')))}.txt"))
     except Exception as e:
+        log_file.write(f"[{str(datetime.now())[11:16]}]: program finished with error {e}\n")
+        log_file.close()
         print(e)
         terminate("Некорректный номер уровня!")
     # Главный Цикл
     time_delta = pygame.time.get_ticks()
     load_sound("background.mp3")
+    log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
     while running:
         from classes import diamonds_left, player_hp
         for event in pygame.event.get():
@@ -59,7 +63,6 @@ if __name__ == "__main__":
         enemy_group.draw(screen)
         walls_group.draw(screen)
         player_group.draw(screen)
-        # print(pygame.time.get_ticks() - time_delta)
         if diamonds_left != 0:
             screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
                                      1, pygame.Color('red')), (0, 25, 100, 10))
@@ -75,6 +78,7 @@ if __name__ == "__main__":
                 pygame.mixer.music.stop()
                 s.play()
                 death_switch = False
+                log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
         pygame.display.flip()
         clock.tick(FPS)
         # Обновление всех спрайтов
@@ -83,11 +87,13 @@ if __name__ == "__main__":
         for sprite in all_sprites:
             if not isinstance(sprite, PlayerHP):
                 camera.apply(sprite)
-        # print(diamonds_left)
         if diamonds_left == 0:
             player.death()
             if death_switch:
                 add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
+                log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is win\n")
+                log_file.write(f"[{str(datetime.now())[11:16]}]: game end "
+                               f"with time {(pygame.time.get_ticks() - time_delta) / 1000}\n")
                 death_switch = False
                 time_delta = (pygame.time.get_ticks() - time_delta) / 1000
     # корректный выход из программы при завершении цикла

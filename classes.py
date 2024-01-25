@@ -3,10 +3,7 @@ import os
 import sqlite3
 import sys
 from datetime import datetime
-
 import pygame
-
-diamonds_left = 100
 
 
 # Создание вспомогательных функций
@@ -55,6 +52,7 @@ def add_to_leaderboard(time, diamonds_collected, user_name="John Doe"):
               time, diamonds_collected))
     connection.commit()
     connection.close()
+    log_file.write(f"[{str(datetime.now())[11:16]}]: winner added to leaderboard as {user_name}\n")
 
 
 def save_game(score):
@@ -84,6 +82,7 @@ def save_game(score):
                                     """, (1, "score", score))
     connection.commit()
     connection.close()
+    log_file.write(f"[{str(datetime.now())[11:16]}]: game saved to save file\n")
 
 
 def load_game():
@@ -130,6 +129,7 @@ def load_game():
         if information[0] == "score":
             score = information[1]
     connection.close()
+    log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
     return Camera(), Player(px, py, stun), PlayerHP(), score
 
 
@@ -217,6 +217,7 @@ FPS = 50
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
 player_hp = 10
 screen = pygame.display.set_mode(SCREEN_SIZE)
+log_file = open("logs.txt", mode="w+")
 tile_images = {
                'wall': load_image('box.png'),
                'empty': load_image('grass.png'),
@@ -368,11 +369,13 @@ class Player(pygame.sprite.Sprite):
                     self.rect = self.rect.move(-m, -n)
                     player_hp -= 1
                     self.stun = FPS * 1
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
                 else:
                     self.rect = self.rect.move(self.last_moves[-1])
                     self.last_moves.remove(self.last_moves[-1])
                     player_hp -= 1
                     self.stun = FPS * 1
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
             if pygame.sprite.spritecollideany(self, walls_group):
                 if m or n:
                     self.rect = self.rect.move(-m, -n)
@@ -382,6 +385,7 @@ class Player(pygame.sprite.Sprite):
             if pygame.sprite.spritecollide(self, diamonds_group, True):
                 self.score += 1
                 diamonds_left -= 1
+                log_file.write(f"[{str(datetime.now())[11:16]}]: player picked diamond\n")
 
     def save(self):
         return self.__class__.__name__, self.rect.x, self.rect.y, None, None, self.stun, 1
@@ -400,6 +404,7 @@ class Player(pygame.sprite.Sprite):
             self.last_moves.remove(self.last_moves[-1])
             player_hp -= 1
             self.stun = FPS * 1
+            log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
         if player_hp < 0:
             player_hp = 0
         if not self.last_moves:
