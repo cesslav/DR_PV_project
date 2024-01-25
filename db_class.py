@@ -1,4 +1,43 @@
+import os
 import sqlite3
+import sys
+from datetime import datetime
+
+import pygame
+
+
+def load_level(filename):  # функция для предварительной обработки уровня
+    filename = resource_path("data/levels/" + filename)
+    # читаем уровень, убирая символы перевода строки
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    # и подсчитываем максимальную длину
+    max_width = max(map(len, level_map))
+    # дополняем каждую строку пустыми клетками ('.')
+    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+
+def resource_path(relative):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative)
+    return os.path.join(relative)
+
+
+def load_image(name, colorkey=None):  # функция для подгрузки изображений
+    fullname = resource_path(os.path.join('data/images', name))
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        pygame.quit()
+        sys.exit(f"Файл с изображением '{fullname}' не найден")
+    image = pygame.image.load(fullname)
+    if colorkey is not None:
+        # image = image.convert()
+        if colorkey == -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    else:
+        image = image.convert_alpha()
+    return image
 
 
 class DBClass:
@@ -22,7 +61,7 @@ class DBClass:
                   str(datetime.now())[11:16],
                   time, diamonds_collected))
         self.connection.commit()
-        log_file.write(f"[{str(datetime.now())[11:16]}]: winner added to leaderboard as {user_name}\n")
+        # log_file.write(f"[{str(datetime.now())[11:16]}]: winner added to leaderboard as {user_name}\n")
 
     def save_game_vars(self, player_hp, score):
         self.cursor.execute("""
@@ -35,7 +74,7 @@ class DBClass:
                                         """, (1, "score", score))
         self.connection.commit()
 
-    def save_game_sprites(self, sprite_inf):
+    def save_game_sprite(self, sprite_inf):
         self.cursor.execute("""
                                 INSERT INTO ObjectProp
                                 VALUES (?,?,?,?,?,?,?)
@@ -52,46 +91,18 @@ class DBClass:
                     """, (1, str(datetime.now())[11:16], "quick save"))
         self.connection.commit()
 
-    def load_game(self):
-        global player_hp
-        global diamonds_left
+    def get_sprites_info(self):
         data = self.cursor.execute("""
             SELECT ObjectType, ObjectX, ObjectY, ObjectDirX, ObjectDirY, ObjectState
             FROM ObjectProp
             WHERE Save_Id = 1
             """).fetchall()
+        return data
 
-        for sprite in all_sprites:
-            sprite.kill()
-
-        px = 0
-        py = 0
-        stun = 0
-        diamonds_left = 0
-        for information in data:
-            if information[0] == "Empty":
-                Empty('empty', information[1] / 50, information[2] / 50)
-            elif information[0] == "Wall":
-                Wall('wall', information[1] / 50, information[2] / 50)
-            elif information[0] == "Player":
-                px, py, stun = information[1], information[2], information[5]
-                if stun > FPS * 2:
-                    stun = FPS * 2
-            elif information[0] == "Diamond":
-                Diamond(information[1] / 50, information[2] / 50)
-                diamonds_left += 1
-            elif information[0] == "GreenSnake":
-                GreenSnake(information[1] / 50, information[2] / 50,
-                           information[3], information[4], information[5])
+    def get_vars_info(self):
         data = self.cursor.execute("""
                 SELECT VarName, VarVal
                 FROM GameVars
                 WHERE Save_Id = 1
                 """).fetchall()
-        for information in data:
-            if information[0] == "player_hp":
-                player_hp = information[1]
-            if information[0] == "score":
-                score = information[1]
-        log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
-        return Camera(), Player(px, py, stun), PlayerHP(), score
+        return data
