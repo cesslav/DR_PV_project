@@ -1,0 +1,2 @@
+[00:06]: level imported successful
+[00:06]: game start
