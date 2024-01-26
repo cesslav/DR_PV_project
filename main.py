@@ -211,7 +211,7 @@ class GreenSnake(pygame.sprite.Sprite):
             elif self.direction_x == -1:
                 self.cur_frame = (self.cur_frame + 1) % 8  # движение влево (колонки с 9 по 2)
             self.image = self.frames[self.cur_frame]
-            if self.direction_x == 1:  # отражаем по горизонтали, если нужно
+            if self.direction_x == 1:  # отражаем по горизонтали
                 self.image = pygame.transform.flip(self.image, True, False)
 
 
