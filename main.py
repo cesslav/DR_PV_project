@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 import os
+from db_class import DBClass
 import sys
 from datetime import datetime
-
 import pygame
 
 from db_class import DBClass, load_level, load_image, resource_path
 
-# создание констант и глобальных переменных
+pygame.init()
 FPS = 50
 diamonds_left = 0
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
@@ -197,6 +197,16 @@ def terminate(text=""):  # экстренный выход из программ
     sys.exit(text)
 
 
+# создание констант и инициализация библиотеки pygame
+tile_images = {
+               'wall': load_image('box.png'),
+               'empty': load_image('grass.png'),
+               'diamond': load_image('diamond.png', -1)
+               }
+player_image = load_image('player.png', -1)
+tile_width = tile_height = 50
+
+
 # создание групп спрайтов для более удобного обращения со спрайтами
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -257,7 +267,7 @@ class GreenSnake(pygame.sprite.Sprite):
             elif self.direction_x == -1:
                 self.cur_frame = (self.cur_frame + 1) % 8  # движение влево (колонки с 9 по 2)
             self.image = self.frames[self.cur_frame]
-            if self.direction_x == 1:  # отражаем по горизонтали, если нужно
+            if self.direction_x == 1:  # отражаем по горизонтали
                 self.image = pygame.transform.flip(self.image, True, False)
 
 
@@ -536,3 +546,4 @@ while running:
             time_delta = (pygame.time.get_ticks() - time_delta) / 1000
 # корректный выход из программы при завершении цикла
 pygame.quit()
+
