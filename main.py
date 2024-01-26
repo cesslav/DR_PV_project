@@ -17,12 +17,11 @@ screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
 log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
 
-
 tile_images = {
-               'wall': load_image('box.png'),
-               'empty': load_image('grass.png'),
-               'diamond': load_image('diamond.png', -1)
-               }
+    'wall': load_image('box.png'),
+    'empty': load_image('grass.png'),
+    'diamond': load_image('diamond.png', -1)
+}
 player_image = load_image('player.png', -1)
 tile_width = tile_height = 50
 
@@ -165,6 +164,8 @@ class GreenSnake(pygame.sprite.Sprite):
             elif self.direction_x == -1:
                 self.cur_frame = (self.cur_frame + 1) % 8  # движение влево (колонки с 9 по 2)
             self.image = self.frames[self.cur_frame]
+            if self.direction_x == 1:  # отражаем по горизонтали
+                self.image = pygame.transform.flip(self.image, True, False)
 
 
 class Wall(pygame.sprite.Sprite):
@@ -396,7 +397,7 @@ while running:
                         elif information[0] == "GreenSnake":
                             GreenSnake(information[1] / 50, information[2] / 50,
                                        information[3], information[4], information[5])
-                    player = Player(px, py, stun, 2*FPS)
+                    player = Player(px, py, stun, 2 * FPS)
                     data = db.get_vars_info()
                     for information in data:
                         if information[0] == "player_hp":
@@ -452,5 +453,3 @@ while running:
             time_delta = (pygame.time.get_ticks() - time_delta) / 1000
 # корректный выход из программы при завершении цикла
 pygame.quit()
-
-
