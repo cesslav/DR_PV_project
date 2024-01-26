@@ -1,37 +1,4 @@
-<<<<<<< HEAD
-[00:06]: level imported successful
-[00:06]: game start
-=======
-[23:53]: level imported successful
-[23:53]: game start
-[23:53]: level imported successful
-[23:53]: player has damaged
-[23:54]: game loaded from save file
-[23:54]: player picked diamond
-[23:54]: player picked diamond
-[23:54]: player has damaged
-[23:54]: player picked diamond
-[23:54]: player has damaged
-[23:54]: player picked diamond
-[23:54]: player has damaged
-[23:54]: player picked diamond
-[23:54]: game loaded from save file
-[23:54]: game loaded from save file
-[23:54]: game loaded from save file
-[23:54]: player has damaged
-[23:54]: player picked diamond
-[23:54]: game loaded from save file
-[23:54]: player has damaged
-[23:54]: player picked diamond
-[23:54]: player picked diamond
-[23:54]: player has damaged
-[23:54]: player has damaged
-[23:54]: player has damaged
-[23:54]: player picked diamond
-[23:54]: game over, player is win
-[23:54]: game end with time 34.57
-[23:54]: game loaded from save file
-[23:54]: player picked diamond
-[23:54]: game loaded from save file
-[23:54]: player picked diamond
->>>>>>> origin/master
+[00:18]: level imported successful
+[00:18]: game start
+[00:18]: level imported successful
+[00:18]: player has damaged
