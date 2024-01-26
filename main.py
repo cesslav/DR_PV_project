@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 import os
-from db_class import DBClass
 import sys
 from datetime import datetime
+
 import pygame
 
+from db_class import DBClass, load_level, load_image, resource_path
 
-pygame.init()
+# создание констант и глобальных переменных
 FPS = 50
 diamonds_left = 0
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
@@ -15,29 +16,13 @@ player_hp = 10
 screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
 log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
-
-
-# Создание вспомогательных функций
-def resource_path(relative):
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, relative)
-    return os.path.join(relative)
-
-
-def load_image(name, colorkey=None):  # функция для подгрузки изображений
-    fullname = resource_path(os.path.join('data/images', name))
-    # если файл не существует, то выходим
-    if not os.path.isfile(fullname):
-        terminate(f"Файл с изображением '{fullname}' не найден")
-    image = pygame.image.load(fullname)
-    if colorkey is not None:
-        image = image.convert()
-        if colorkey == -1:
-            colorkey = image.get_at((0, 0))
-        image.set_colorkey(colorkey)
-    else:
-        image = image.convert_alpha()
-    return image
+tile_images = {
+               'wall': load_image('box.png'),
+               'empty': load_image('grass.png'),
+               'diamond': load_image('diamond.png', -1)
+               }
+player_image = load_image('player.png', -1)
+tile_width = tile_height = 50
 
 
 def load_sound(name):  # функция для подгрузки музыки
@@ -80,18 +65,101 @@ def start_screen(scr, width, height):  # функция для включени�
                     event.type == pygame.MOUSEBUTTONDOWN:
                 return  # начинаем игру
         pygame.display.flip()
-        clock.tick(24)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
+        clock.tick(15)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
 
 
-def load_level(filename):  # функция для предварительной обработки уровня
-    filename = resource_path("data/levels/" + filename)
-    # читаем уровень, убирая символы перевода строки
-    with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    # и подсчитываем максимальную длину
-    max_width = max(map(len, level_map))
-    # дополняем каждую строку пустыми клетками ('.')
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+def level_choose_screen(scr, corr=True):  # функция для включения стартскрина
+    screen.fill((0, 0, 0))
+    intro_text = [f"ВВОД:",
+                  f"Выберите уровень:",
+                  f"Для ввода нажимайте",
+                  f"клавиши цифр",
+                  f"Для подтверждения",
+                  f"нажмите ENTER"]
+    font = pygame.font.Font(None, 47)
+    text_coord = 50
+    ret_num = ""
+    clock = pygame.time.Clock()
+    for line in intro_text:  # построчная печать текста
+        string_rendered = font.render(line, 1, pygame.Color("#BD0D9E"))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        scr.blit(string_rendered, intro_rect)
+    print(intro_text)
+    while True:  # ожидание нажатия для окончания стартскрина
+        # screen.fill((0, 0, 0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return int(ret_num)
+                elif event.key == pygame.K_0:
+                    ret_num = ret_num + "0"
+                elif event.key == pygame.K_1:
+                    ret_num = ret_num + "1"
+                elif event.key == pygame.K_2:
+                    ret_num = ret_num + "2"
+                elif event.key == pygame.K_3:
+                    ret_num = ret_num + "3"
+                elif event.key == pygame.K_4:
+                    ret_num = ret_num + "4"
+                elif event.key == pygame.K_5:
+                    ret_num = ret_num + "5"
+                elif event.key == pygame.K_6:
+                    ret_num = ret_num + "6"
+                elif event.key == pygame.K_7:
+                    ret_num = ret_num + "7"
+                elif event.key == pygame.K_8:
+                    ret_num = ret_num + "8"
+                elif event.key == pygame.K_9:
+                    ret_num = ret_num + "9"
+                elif event.key == pygame.K_BACKSPACE:
+                    ret_num = ret_num[:-1]
+        scr.fill("black")
+        if corr:
+            intro_text = [f"ВВОД: {ret_num}",
+                          f"Выберите уровень:",
+                          f"Для ввода нажимайте",
+                          f"клавиши цифр",
+                          f"Для подтверждения",
+                          f"нажмите ENTER"]
+        else:
+            intro_text = [f"ВВОД: {ret_num}",
+                          f"Выберите уровень:",
+                          f"Для ввода нажимайте",
+                          f"клавиши цифр",
+                          f"Для подтверждения",
+                          f"нажмите ENTER",
+                          f"некорректный номер уровня"]
+        text_coord = 50
+        print(ret_num)
+        for line in intro_text:  # построчная печать текста
+            string_rendered = font.render(line, 1, pygame.Color("#BD0D9E"))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            scr.blit(string_rendered, intro_rect)
+        print(intro_text)
+        # pygame.time.wait(1000)
+        pygame.display.flip()
+        clock.tick(15)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
+
+
+def ttg_level_num(screen, isst):
+    try:
+        # mode = str(input("Enter game mode(t/q): "))
+        player, level_x, level_y = generate_level(load_level(f"level{level_choose_screen(screen, isst)}.txt"))
+        db = DBClass('saves.db')
+        return db, player, level_x, level_y
+    except Exception as e:
+        log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
+        return ttg_level_num(False)
 
 
 def generate_level(level):  # наполнение уровня
@@ -127,16 +195,6 @@ def generate_level(level):  # наполнение уровня
 def terminate(text=""):  # экстренный выход из программы
     pygame.quit()
     sys.exit(text)
-
-
-# создание констант и инициализация библиотеки pygame
-tile_images = {
-               'wall': load_image('box.png'),
-               'empty': load_image('grass.png'),
-               'diamond': load_image('diamond.png', -1)
-               }
-player_image = load_image('player.png', -1)
-tile_width = tile_height = 50
 
 
 # создание групп спрайтов для более удобного обращения со спрайтами
@@ -200,18 +258,6 @@ class GreenSnake(pygame.sprite.Sprite):
                 self.cur_frame = (self.cur_frame + 1) % 8  # движение влево (колонки с 9 по 2)
             self.image = self.frames[self.cur_frame]
             if self.direction_x == 1:  # отражаем по горизонтали, если нужно
-                self.image = pygame.transform.flip(self.image, True, False)
-
-    def update(self):
-        self.update_load += 1
-        if self.update_load % 30 == 0:
-            self.move()
-            if self.direction_x == 1:
-                self.cur_frame = (self.cur_frame - 1) % 8  # движение вправо (колонки с 9 по 2)
-            elif self.direction_x == -1:
-                self.cur_frame = (self.cur_frame + 1) % 8  # движение влево (колонки с 9 по 2)
-            self.image = self.frames[self.cur_frame]
-            if self.direction_x == 1:  # отражаем по горизонтали
                 self.image = pygame.transform.flip(self.image, True, False)
 
 
@@ -367,97 +413,126 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
-def main():
-    start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
-    # Локальные объекты и функции, которые больше нигде не понадобятся.
-    # pygame.mixer.music.load("/data/sounds/background.mp3")
-    s = pygame.mixer.Sound(os.path.join('data/sounds', "game_over.mp3"))
-    clock = pygame.time.Clock()
-    running = True
-    pygame.display.set_caption("DMPV")
-    pygame.display.set_icon(load_image("player.png", -1))
-    camera = Camera()
-    hp = PlayerHP(load_image('hp.png', -1), 11, 1)
-    font1 = pygame.font.Font(None, 20)
-    font2 = pygame.font.Font(None, 50)
-    death_switch = True
-    # Выбор, загрузка уровня и безопасный выход в случае ошибки
-    # (в будущем будет добавлено автоотправление письма-фидбека о баге)
-    log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
-    try:
-        player, level_x, level_y = generate_level(load_level(f"level{(int(input('Введите номер уровня: ')))}.txt"))
-        db = DBClass('saves.db')
-    except Exception as e:
-        log_file.write(f"[{str(datetime.now())[11:16]}]: program finished with error {e}\n")
-        log_file.close()
-        print(e)
-        terminate("Некорректный номер уровня!")
-    # Главный Цикл
-    time_delta = pygame.time.get_ticks()
-    load_sound("background.mp3")
-    log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                    player.move(50, 0)
-                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                    player.move(-50, 0)
-                if event.key == pygame.K_UP or event.key == pygame.K_w:
-                    player.move(0, -50)
-                if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                    player.move(0, 50)
-                if event.key == pygame.K_ESCAPE:
-                    start_screen(screen, WIDTH, HEIGHT)
-                if event.key == pygame.K_q:
-                    db.save_game(player.score)
-                if event.key == pygame.K_e:
-                    camera, player, hp, player.score = db.load_game()
+pygame.init()
+start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
+# Локальные объекты и функции, которые больше нигде не понадобятся.
+s = pygame.mixer.Sound(os.path.join('data/sounds', "game_over.mp3"))
+clock = pygame.time.Clock()
+pygame.display.set_caption("DMPV")
+pygame.display.set_icon(load_image("player.png", -1))
+hp = PlayerHP(load_image('hp.png', -1), 11, 1)
+font1, font2 = pygame.font.Font(None, 20), pygame.font.Font(None, 50)
+death_switch, running = True, True
+# Выбор, загрузка уровня и безопасный выход в случае ошибки
+# (в будущем будет добавлено автоотправление письма-фидбека о баге)
+log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
+db, player, level_x, level_y = ttg_level_num(screen, True)
+camera = Camera()
+# Главный Цикл
+time_delta = pygame.time.get_ticks()
+load_sound("background.mp3")
+log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                player.move(50, 0)
+            if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                player.move(-50, 0)
+            if event.key == pygame.K_UP or event.key == pygame.K_w:
+                player.move(0, -50)
+            if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                player.move(0, 50)
+            if event.key == pygame.K_ESCAPE:
+                start_screen(screen, WIDTH, HEIGHT)
+            if event.key == pygame.K_q:
+                db.clear_db()
+                for sprite in all_sprites:
+                    if not isinstance(sprite, Camera) and not isinstance(sprite, PlayerHP):
+                        db.save_game_sprite(sprite.save())
+                db.save_game_vars(player_hp, player.score)
+            if event.key == pygame.K_e:
+                try:
+                    for sprite in all_sprites:
+                        sprite.kill()
+                    # pygame.quit()
+                    # pygame.init()
+                    # screen = pygame.display.set_mode(SCREEN_SIZE)
+                    data = db.get_sprites_info()
+                    px = 0
+                    py = 0
+                    stun = 0
+                    diamonds_left = 0
+                    for information in data:
+                        if information[0] == "Empty":
+                            Empty('empty', information[1] / 50, information[2] / 50)
+                        elif information[0] == "Wall":
+                            Wall('wall', information[1] / 50, information[2] / 50)
+                        elif information[0] == "Player":
+                            px, py, stun = information[1], information[2], information[5]
+                            if stun > FPS * 2:
+                                stun = FPS * 2
+                        elif information[0] == "Diamond":
+                            Diamond(information[1] / 50, information[2] / 50)
+                            diamonds_left += 1
+                        elif information[0] == "GreenSnake":
+                            GreenSnake(information[1] / 50, information[2] / 50,
+                                       information[3], information[4], information[5])
+                    player = Player(px, py, stun, 2*FPS)
+                    data = db.get_vars_info()
+                    for information in data:
+                        if information[0] == "player_hp":
+                            player_hp = information[1]
+                        if information[0] == "score":
+                            score = information[1]
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
+                    camera = Camera()
+                    hp = PlayerHP()
+                    player.score = score
                     player.extra_move(-150)
-        # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
-        screen.fill((0, 0, 0))
-        all_sprites.draw(screen)
-        enemy_group.draw(screen)
-        walls_group.draw(screen)
-        player_group.draw(screen)
-        if diamonds_left != 0:
-            screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
-                                     1, pygame.Color('red')), (0, 25, 100, 10))
-        else:
-            screen.blit(font1.render(f"TIME {time_delta}",
-                                     1, pygame.Color('red')), (0, 25, 100, 10))
-            screen.blit(font2.render("YOU WIN!", 1,
-                                     pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-        if player_hp == 0 and diamonds_left != 0:
-            screen.blit(font2.render("Game Over", 1,
-                                     pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-            if death_switch:
-                pygame.mixer.music.stop()
-                s.play()
-                death_switch = False
-                log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
-        pygame.display.flip()
-        clock.tick(FPS)
-        # Обновление всех спрайтов
-        all_sprites.update()
-        camera.update(player)
-        for sprite in all_sprites:
-            if not isinstance(sprite, PlayerHP):
-                camera.apply(sprite)
-        if diamonds_left == 0:
-            player.death()
-            if death_switch:
-                db.add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
-                log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is win\n")
-                log_file.write(f"[{str(datetime.now())[11:16]}]: game end "
-                               f"with time {(pygame.time.get_ticks() - time_delta) / 1000}\n")
-                death_switch = False
-                time_delta = (pygame.time.get_ticks() - time_delta) / 1000
-    # корректный выход из программы при завершении цикла
-    pygame.quit()
-
-
-main()
-
+                except Exception as e:
+                    print(e)
+                    terminate()
+    # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
+    screen.fill((0, 0, 0))
+    all_sprites.draw(screen)
+    enemy_group.draw(screen)
+    walls_group.draw(screen)
+    player_group.draw(screen)
+    if diamonds_left != 0:
+        screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
+                                 1, pygame.Color('red')), (0, 25, 100, 10))
+    else:
+        screen.blit(font1.render(f"TIME {time_delta}",
+                                 1, pygame.Color('red')), (0, 25, 100, 10))
+        screen.blit(font2.render("YOU WIN!", 1,
+                                 pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
+    if player_hp == 0 and diamonds_left != 0:
+        screen.blit(font2.render("Game Over", 1,
+                                 pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
+        if death_switch:
+            pygame.mixer.music.stop()
+            s.play()
+            death_switch = False
+            log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
+    pygame.display.flip()
+    clock.tick(FPS)
+    # Обновление всех спрайтов
+    all_sprites.update()
+    camera.update(player)
+    for sprite in all_sprites:
+        if not isinstance(sprite, PlayerHP):
+            camera.apply(sprite)
+    if diamonds_left == 0:
+        player.death()
+        if death_switch:
+            db.add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
+            log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is win\n")
+            log_file.write(f"[{str(datetime.now())[11:16]}]: game end "
+                           f"with time {(pygame.time.get_ticks() - time_delta) / 1000}\n")
+            death_switch = False
+            time_delta = (pygame.time.get_ticks() - time_delta) / 1000
+# корректный выход из программы при завершении цикла
+pygame.quit()
