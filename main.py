@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 import os
-from db_class import DBClass
-import sys
+from db_class import DBClass, Empty, Wall, Diamond, Camera
+from add_func import terminate, level_choose_screen, load_level, load_image, resource_path
 from datetime import datetime
 import pygame
-
-from db_class import DBClass, load_level, load_image, resource_path
 
 pygame.init()
 FPS = 50
@@ -68,95 +66,15 @@ def start_screen(scr, width, height):  # функция для включени�
         clock.tick(15)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
 
 
-def level_choose_screen(scr, corr=True):  # функция для включения стартскрина
-    screen.fill((0, 0, 0))
-    intro_text = [f"ВВОД:",
-                  f"Выберите уровень:",
-                  f"Для ввода нажимайте",
-                  f"клавиши цифр",
-                  f"Для подтверждения",
-                  f"нажмите ENTER"]
-    font = pygame.font.Font(None, 47)
-    text_coord = 50
-    ret_num = ""
-    clock = pygame.time.Clock()
-    for line in intro_text:  # построчная печать текста
-        string_rendered = font.render(line, 1, pygame.Color("#BD0D9E"))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10
-        text_coord += intro_rect.height
-        scr.blit(string_rendered, intro_rect)
-    while True:  # ожидание нажатия для окончания стартскрина
-        # screen.fill((0, 0, 0))
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    return int(ret_num)
-                elif event.key == pygame.K_0:
-                    ret_num = ret_num + "0"
-                elif event.key == pygame.K_1:
-                    ret_num = ret_num + "1"
-                elif event.key == pygame.K_2:
-                    ret_num = ret_num + "2"
-                elif event.key == pygame.K_3:
-                    ret_num = ret_num + "3"
-                elif event.key == pygame.K_4:
-                    ret_num = ret_num + "4"
-                elif event.key == pygame.K_5:
-                    ret_num = ret_num + "5"
-                elif event.key == pygame.K_6:
-                    ret_num = ret_num + "6"
-                elif event.key == pygame.K_7:
-                    ret_num = ret_num + "7"
-                elif event.key == pygame.K_8:
-                    ret_num = ret_num + "8"
-                elif event.key == pygame.K_9:
-                    ret_num = ret_num + "9"
-                elif event.key == pygame.K_BACKSPACE:
-                    ret_num = ret_num[:-1]
-        scr.fill("black")
-        if corr:
-            intro_text = [f"ВВОД: {ret_num}",
-                          f"Выберите уровень:",
-                          f"Для ввода нажимайте",
-                          f"клавиши цифр",
-                          f"Для подтверждения",
-                          f"нажмите ENTER"]
-        else:
-            intro_text = [f"ВВОД: {ret_num}",
-                          f"Выберите уровень:",
-                          f"Для ввода нажимайте",
-                          f"клавиши цифр",
-                          f"Для подтверждения",
-                          f"нажмите ENTER",
-                          f"некорректный номер уровня"]
-        text_coord = 50
-        for line in intro_text:  # построчная печать текста
-            string_rendered = font.render(line, 1, pygame.Color("#BD0D9E"))
-            intro_rect = string_rendered.get_rect()
-            text_coord += 10
-            intro_rect.top = text_coord
-            intro_rect.x = 10
-            text_coord += intro_rect.height
-            scr.blit(string_rendered, intro_rect)
-        # pygame.time.wait(1000)
-        pygame.display.flip()
-        clock.tick(15)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
-
-
-def ttg_level_num(screen, isst):
-    try:
+def ttg_level_num(scr, isst):
+    # try:
         # mode = str(input("Enter game mode(t/q): "))
-        player, level_x, level_y = generate_level(load_level(f"level{level_choose_screen(screen, isst)}.txt"))
+        player, level_x, level_y = generate_level(load_level(f"level{level_choose_screen(scr, isst)}.txt"))
         db = DBClass('saves.db')
         return db, player, level_x, level_y
-    except Exception as e:
-        log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
-        return ttg_level_num(False)
+    # except Exception as e:
+    #     log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
+    #     return ttg_level_num(scr, False)
 
 
 def generate_level(level):  # наполнение уровня
@@ -168,30 +86,25 @@ def generate_level(level):  # наполнение уровня
     for y in range(len(level)):  # создание спрайтов уровня
         for x in range(len(level[y])):
             if level[y][x] == '.':
-                Empty('empty', x, y)
+                Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
             elif level[y][x] == '#':
-                Wall('wall', x, y)
+                Wall(all_sprites, tiles_group, walls_group, x, y, tile_images['wall'])
             elif level[y][x] == '@':
-                Empty('empty', x, y)
+                Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 px, py = x, y
             elif level[y][x] == 'd':
-                Empty('empty', x, y)
-                Diamond(x, y)
+                Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                Diamond(all_sprites, diamonds_group, x, y, tile_images['diamond'])
                 diamonds_left += 1
             elif level[y][x] == 'g':
-                Empty('empty', x, y)
+                Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 GreenSnake(x, y, snake_type='g')
             elif level[y][x] == 'q':
-                Empty('empty', x, y)
+                Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 GreenSnake(x, y, snake_type='q')
     # вернем игрока, а также размер поля в клетках
     new_player = Player(px, py)  # создание игрока
     return new_player, x, y
-
-
-def terminate(text=""):  # экстренный выход из программы
-    pygame.quit()
-    sys.exit(text)
 
 
 # создание групп спрайтов для более удобного обращения со спрайтами
@@ -258,40 +171,6 @@ class GreenSnake(pygame.sprite.Sprite):
                 self.image = pygame.transform.flip(self.image, True, False)
 
 
-class Wall(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(tiles_group, all_sprites)
-        self.image = tile_images[tile_type]
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
-        self.add(walls_group)
-
-    def save(self):
-        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
-
-
-class Diamond(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(all_sprites, diamonds_group)
-        self.image = tile_images['diamond']
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
-
-    def save(self):
-        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
-
-
-class Empty(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(tiles_group, all_sprites)
-        self.image = tile_images[tile_type]
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
-
-    def save(self):
-        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
-
-
 class PlayerHP(pygame.sprite.Sprite):
     def __init__(self, sheet=load_image('hp.png', -1), columns=11, rows=1):
         super().__init__(all_sprites, player_group)
@@ -313,7 +192,6 @@ class PlayerHP(pygame.sprite.Sprite):
     def update(self):
         self.cur_frame = 10 - player_hp
         self.image = self.frames[self.cur_frame]
-        pass
 
 
 class Player(pygame.sprite.Sprite):
@@ -384,32 +262,6 @@ class Player(pygame.sprite.Sprite):
             self.loading -= 1
 
 
-class Camera:
-    # зададим начальный сдвиг камеры
-    def __init__(self):
-        self.dx = -3
-        self.dy = -3
-
-    # сдвинуть объект obj на смещение камеры
-    def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
-
-        if -1 > obj.rect.x:
-            obj.rect.x += WIDTH
-        elif obj.rect.x > WIDTH - 1:
-            obj.rect.x -= WIDTH
-        if -1 > obj.rect.y:
-            obj.rect.y += HEIGHT
-        elif obj.rect.y > HEIGHT - 1:
-            obj.rect.y -= HEIGHT
-
-    # позиционировать камеру на объекте target
-    def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
-
-
 pygame.init()
 start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
 # Локальные объекты и функции, которые больше нигде не понадобятся.
@@ -464,15 +316,18 @@ while running:
                     diamonds_left = 0
                     for information in data:
                         if information[0] == "Empty":
-                            Empty('empty', information[1] / 50, information[2] / 50)
+                            Empty(all_sprites, tiles_group, information[1] / 50,
+                                  information[2] / 50, tile_images['empty'])
                         elif information[0] == "Wall":
-                            Wall('wall', information[1] / 50, information[2] / 50)
+                            Wall(all_sprites, tiles_group, walls_group, information[1] / 50,
+                                 information[2] / 50, tile_images['wall'])
                         elif information[0] == "Player":
                             px, py, stun = information[1], information[2], information[5]
                             if stun > FPS * 2:
                                 stun = FPS * 2
                         elif information[0] == "Diamond":
-                            Diamond(information[1] / 50, information[2] / 50)
+                            Diamond(all_sprites, diamonds_group, information[1] / 50,
+                                    information[2] / 50, tile_images['diamond'])
                             diamonds_left += 1
                         elif information[0] == "GreenSnake":
                             GreenSnake(information[1] / 50, information[2] / 50,
