@@ -3,6 +3,49 @@ import sys
 import pygame
 
 
+def start_screen(scr, width, height):  # функция для включения стартскрина
+    intro_text = ["ЗАСТАВКА", "",
+                  "Правила игры",
+                  "Управление стрелками или WASD",
+                  "удар молотом на пробел",
+                  "q для быстрого сохранения",
+                  "e для быстрой загрузки"]
+
+    fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
+    scr.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 47)
+    text_coord = 50
+    clock = pygame.time.Clock()
+    for line in intro_text:  # построчная печать текста
+        string_rendered = font.render(line, 1, pygame.Color("#BD0D9E"))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        scr.blit(string_rendered, intro_rect)
+
+    while True:  # ожидание нажатия для окончания стартскрина
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return  # начинаем игру
+        pygame.display.flip()
+        clock.tick(15)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
+
+
+def load_sound(name):  # функция для подгрузки музыки
+    fullname = resource_path(os.path.join('data/sounds', name))
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        terminate(f"Файл с музыкой '{fullname}' не найден")
+    pygame.mixer.music.load(fullname)
+    pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(0.2)
+
+
 def level_choose_screen(scr, corr=True):  # функция для включения стартскрина
     scr.fill((0, 0, 0))
     intro_text = [f"ВВОД:",

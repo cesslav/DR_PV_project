@@ -1,6 +1,5 @@
 import sqlite3
 from datetime import datetime
-
 import pygame
 
 
@@ -133,3 +132,82 @@ class Diamond(pygame.sprite.Sprite):
 
     def save(self):
         return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
+
+
+class PlayerHP(pygame.sprite.Sprite):
+    def __init__(self, all_sprites, player_group, sheet, columns=11, rows=1):
+        super().__init__(all_sprites, player_group)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(0, 0)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self, player_hp):
+        self.cur_frame = 10 - player_hp
+        self.image = self.frames[self.cur_frame]
+
+
+class GreenSnake(pygame.sprite.Sprite):
+    def __init__(self, all_sprites, enemy_group, x, y, img, tile_width=50, dirx=1, diry=0, stun=0, snake_type=None):
+        super().__init__(all_sprites, enemy_group)
+        self.tile_width = tile_width
+        self.frames = []
+        sheet = img
+        self.cut_sheet(sheet)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(x * self.tile_width, y * self.tile_width)
+        self.direction_x = dirx
+        self.direction_y = diry
+        # Убираем случайное изменение направления
+        if snake_type:
+            if snake_type == 'q':
+                self.direction_x = 0  # Направление по горизонтали для 'q'
+                self.direction_y = 1  # Направление вверх для 'q'
+            else:
+                self.direction_x = 1  # Направление вправо для 'g'
+                self.direction_y = 0  # Направление по вертикали для 'g'
+
+        self.update_load = 0
+        self.stun = stun
+
+    def cut_sheet(self, sheet, columns=9, rows=12):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
+    def save(self):
+        return self.__class__.__name__, self.rect.x, self.rect.y, self.direction_x, self.direction_y, self.stun, 1
+
+    def move(self, walls_group):
+        m = self.direction_x * self.tile_width
+        n = self.direction_y * self.tile_width
+        self.rect = self.rect.move(m, n)
+        if pygame.sprite.spritecollide(self, walls_group, False):
+            self.rect = self.rect.move(-2 * m, -2 * n)
+            self.direction_x = -self.direction_x
+            self.direction_y = -self.direction_y
+
+    def update(self, walls_group):
+        self.update_load += 1
+        if self.update_load % 30 == 0:
+            self.move(walls_group)
+            if self.direction_x == 1:
+                self.cur_frame = (self.cur_frame - 1) % 8  # движение вправо (колонки с 9 по 2)
+            elif self.direction_x == -1:
+                self.cur_frame = (self.cur_frame + 1) % 8  # движение влево (колонки с 9 по 2)
+            self.image = self.frames[self.cur_frame]
+            if self.direction_x == 1:  # отражаем по горизонтали
+                self.image = pygame.transform.flip(self.image, True, False)

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 import os
-from db_class import DBClass, Empty, Wall, Diamond, Camera
-from add_func import terminate, level_choose_screen, load_level, load_image, resource_path
+from db_class import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake
+from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen
 from datetime import datetime
 import pygame
+
 
 pygame.init()
 FPS = 50
@@ -23,58 +24,24 @@ player_image = load_image('player.png', -1)
 tile_width = tile_height = 50
 
 
-def load_sound(name):  # функция для подгрузки музыки
-    fullname = resource_path(os.path.join('data/sounds', name))
-    # если файл не существует, то выходим
-    if not os.path.isfile(fullname):
-        terminate(f"Файл с музыкой '{fullname}' не найден")
-    pygame.mixer.music.load(fullname)
-    pygame.mixer.music.play(-1)
-    pygame.mixer.music.set_volume(0.2)
-
-
-def start_screen(scr, width, height):  # функция для включения стартскрина
-    intro_text = ["ЗАСТАВКА", "",
-                  "Правила игры",
-                  "Управление стрелками или WASD",
-                  "удар молотом на пробел",
-                  "q для быстрого сохранения",
-                  "e для быстрой загрузки"]
-
-    fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
-    scr.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 47)
-    text_coord = 50
-    clock = pygame.time.Clock()
-    for line in intro_text:  # построчная печать текста
-        string_rendered = font.render(line, 1, pygame.Color("#BD0D9E"))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10
-        text_coord += intro_rect.height
-        scr.blit(string_rendered, intro_rect)
-
-    while True:  # ожидание нажатия для окончания стартскрина
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-                return  # начинаем игру
-        pygame.display.flip()
-        clock.tick(15)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
+# создание групп спрайтов для более удобного обращения со спрайтами
+all_sprites = pygame.sprite.Group()
+tiles_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
+walls_group = pygame.sprite.Group()
+diamonds_group = pygame.sprite.Group()
 
 
 def ttg_level_num(scr, isst):
-    # try:
+    try:
         # mode = str(input("Enter game mode(t/q): "))
         player, level_x, level_y = generate_level(load_level(f"level{level_choose_screen(scr, isst)}.txt"))
         db = DBClass('saves.db')
         return db, player, level_x, level_y
-    # except Exception as e:
-    #     log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
-    #     return ttg_level_num(scr, False)
+    except Exception as e:
+        log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
+        return ttg_level_num(scr, False)
 
 
 def generate_level(level):  # наполнение уровня
@@ -98,100 +65,13 @@ def generate_level(level):  # наполнение уровня
                 diamonds_left += 1
             elif level[y][x] == 'g':
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
-                GreenSnake(x, y, snake_type='g')
+                GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='g')
             elif level[y][x] == 'q':
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
-                GreenSnake(x, y, snake_type='q')
+                GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
     # вернем игрока, а также размер поля в клетках
     new_player = Player(px, py)  # создание игрока
     return new_player, x, y
-
-
-# создание групп спрайтов для более удобного обращения со спрайтами
-all_sprites = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
-enemy_group = pygame.sprite.Group()
-walls_group = pygame.sprite.Group()
-diamonds_group = pygame.sprite.Group()
-
-
-class GreenSnake(pygame.sprite.Sprite):
-    def __init__(self, x, y, dirx=1, diry=0, stun=0, snake_type=None):
-        super().__init__(all_sprites, enemy_group)
-        self.frames = []
-        sheet = load_image('snakes.png', -1)
-        self.cut_sheet(sheet)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x * tile_width, y * tile_height)
-        self.direction_x = dirx
-        self.direction_y = diry
-        # Убираем случайное изменение направления
-        if snake_type:
-            if snake_type == 'q':
-                self.direction_x = 0  # Направление по горизонтали для 'q'
-                self.direction_y = 1  # Направление вверх для 'q'
-            else:
-                self.direction_x = 1  # Направление вправо для 'g'
-                self.direction_y = 0  # Направление по вертикали для 'g'
-
-        self.update_load = 0
-        self.stun = stun
-
-    def cut_sheet(self, sheet, columns=9, rows=12):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
-
-    def save(self):
-        return self.__class__.__name__, self.rect.x, self.rect.y, self.direction_x, self.direction_y, self.stun, 1
-
-    def move(self):
-        m = self.direction_x * tile_width
-        n = self.direction_y * tile_height
-        self.rect = self.rect.move(m, n)
-        if pygame.sprite.spritecollide(self, walls_group, False):
-            self.rect = self.rect.move(-2 * m, -2 * n)
-            self.direction_x = -self.direction_x
-            self.direction_y = -self.direction_y
-
-    def update(self):
-        self.update_load += 1
-        if self.update_load % 30 == 0:
-            self.move()
-            if self.direction_x == 1:
-                self.cur_frame = (self.cur_frame - 1) % 8  # движение вправо (колонки с 9 по 2)
-            elif self.direction_x == -1:
-                self.cur_frame = (self.cur_frame + 1) % 8  # движение влево (колонки с 9 по 2)
-            self.image = self.frames[self.cur_frame]
-            if self.direction_x == 1:  # отражаем по горизонтали
-                self.image = pygame.transform.flip(self.image, True, False)
-
-
-class PlayerHP(pygame.sprite.Sprite):
-    def __init__(self, sheet=load_image('hp.png', -1), columns=11, rows=1):
-        super().__init__(all_sprites, player_group)
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(0, 0)
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
-
-    def update(self):
-        self.cur_frame = 10 - player_hp
-        self.image = self.frames[self.cur_frame]
 
 
 class Player(pygame.sprite.Sprite):
@@ -208,20 +88,20 @@ class Player(pygame.sprite.Sprite):
     def move(self, m, n):
         global player_hp
         global diamonds_left
-        if player_hp > 0 and self.stun < FPS * 0.5 and self.loading == 0:
+        if player_hp > 0 and self.stun < FPS * 0.25 and self.loading == 0:
             self.rect = self.rect.move(m, n)
             self.last_moves.append((m, n))
             if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
                 if m or n:
                     self.rect = self.rect.move(-m, -n)
-                    player_hp -= 1
-                    self.stun = FPS * 1
+                    player_hp -= 2
+                    self.stun = FPS * 0.75
                     log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
                 else:
                     self.rect = self.rect.move(self.last_moves[-1])
                     self.last_moves.remove(self.last_moves[-1])
-                    player_hp -= 1
-                    self.stun = FPS * 1
+                    player_hp -= 2
+                    self.stun = FPS * 0.75
                     log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
             if pygame.sprite.spritecollideany(self, walls_group):
                 if m or n:
@@ -244,13 +124,12 @@ class Player(pygame.sprite.Sprite):
         global player_hp
         player_hp = 0
 
-    def update(self):
-        global player_hp
+    def update(self, player_hp):
         if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
             self.rect = self.rect.move(-self.last_moves[-1][0], -self.last_moves[-1][1])
             self.last_moves.remove(self.last_moves[-1])
-            player_hp -= 1
-            self.stun = FPS * 1
+            player_hp -= 2
+            self.stun = FPS * 0.75
             log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
         if player_hp < 0:
             player_hp = 0
@@ -265,18 +144,16 @@ class Player(pygame.sprite.Sprite):
 pygame.init()
 start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
 # Локальные объекты и функции, которые больше нигде не понадобятся.
-s = pygame.mixer.Sound(os.path.join('data/sounds', "game_over.mp3"))
-clock = pygame.time.Clock()
 pygame.display.set_caption("DMPV")
 pygame.display.set_icon(load_image("player.png", -1))
-hp = PlayerHP(load_image('hp.png', -1), 11, 1)
+hp = PlayerHP(all_sprites, player_group, load_image('hp.png', -1))
 font1, font2 = pygame.font.Font(None, 20), pygame.font.Font(None, 50)
-death_switch, running = True, True
+death_switch, running, s = True, True, pygame.mixer.Sound(os.path.join('data/sounds', "game_over.mp3"))
 # Выбор, загрузка уровня и безопасный выход в случае ошибки
 # (в будущем будет добавлено автоотправление письма-фидбека о баге)
 log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
 db, player, level_x, level_y = ttg_level_num(screen, True)
-camera = Camera()
+camera, clock = Camera(), pygame.time.Clock()
 # Главный Цикл
 time_delta = pygame.time.get_ticks()
 load_sound("background.mp3")
@@ -330,8 +207,9 @@ while running:
                                     information[2] / 50, tile_images['diamond'])
                             diamonds_left += 1
                         elif information[0] == "GreenSnake":
-                            GreenSnake(information[1] / 50, information[2] / 50,
-                                       information[3], information[4], information[5])
+                            GreenSnake(all_sprites, enemy_group, information[1] / 50, information[2] / 50,
+                                       load_image("snakes.png"), dirx=information[3], diry=information[4],
+                                       stun=information[5])
                     player = Player(px, py, stun, 2*FPS)
                     data = db.get_vars_info()
                     for information in data:
@@ -341,7 +219,7 @@ while running:
                             score = information[1]
                     log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
                     camera = Camera()
-                    hp = PlayerHP()
+                    hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
                     player.score = score
                     player.extra_move(-150)
                 except Exception as e:
@@ -372,7 +250,14 @@ while running:
     pygame.display.flip()
     clock.tick(FPS)
     # Обновление всех спрайтов
-    all_sprites.update()
+    # all_sprites.update()
+    for sprite in all_sprites:
+        if sprite in enemy_group:
+            sprite.update(walls_group)
+        elif sprite in player_group:
+            sprite.update(player_hp)
+        else:
+            sprite.update()
     camera.update(player)
     for sprite in all_sprites:
         if not isinstance(sprite, PlayerHP):

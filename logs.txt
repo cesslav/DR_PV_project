@@ -1,16 +1,15 @@
-[15:34]: level imported successful
-[15:34]: game start
-[15:34]: level imported successful
-[15:34]: player has damaged
-[15:34]: player picked diamond
-[15:34]: game loaded from save file
-[15:34]: player picked diamond
-[15:34]: player picked diamond
-[15:34]: game loaded from save file
-[15:34]: player picked diamond
-[15:34]: game loaded from save file
-[15:34]: game loaded from save file
-[15:34]: game loaded from save file
-[15:34]: game loaded from save file
-[15:34]: game loaded from save file
-[15:34]: game loaded from save file
+[17:14]: level imported successful
+[17:14]: game start
+[17:14]: level imported successful
+[17:14]: player has damaged
+[17:14]: player picked diamond
+[17:14]: player picked diamond
+[17:14]: player picked diamond
+[17:14]: player picked diamond
+[17:14]: player picked diamond
+[17:14]: player picked diamond
+[17:15]: player picked diamond
+[17:15]: player has damaged
+[17:15]: player picked diamond
+[17:15]: game over, player is win
+[17:15]: game end with time 10.483
