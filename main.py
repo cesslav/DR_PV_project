@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 import os
-from db_class import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake
+from classes import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake
 from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen
 from datetime import datetime
 import pygame
@@ -36,18 +36,18 @@ diamonds_group = pygame.sprite.Group()
 def ttg_level_num(scr, isst):
     try:
         # mode = str(input("Enter game mode(t/q): "))
-        player, level_x, level_y = generate_level(load_level(f"level{level_choose_screen(scr, isst)}.txt"))
-        db = DBClass('saves.db')
-        return db, player, level_x, level_y
-    except Exception as e:
-        log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
+        pl, x, y = generate_level(load_level(f"level{level_choose_screen(scr, isst)}.txt"))
+        bd = DBClass('saves.db')
+        return bd, pl, x, y
+    except Exception as f:
+        log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{f}'\n")
         return ttg_level_num(scr, False)
 
 
 def generate_level(level):  # наполнение уровня
     global diamonds_left
-    px = 0
-    py = 0
+    player_x = 0
+    player_y = 0
     diamonds_left = 0
     new_player, x, y = None, None, None
     for y in range(len(level)):  # создание спрайтов уровня
@@ -58,7 +58,7 @@ def generate_level(level):  # наполнение уровня
                 Wall(all_sprites, tiles_group, walls_group, x, y, tile_images['wall'])
             elif level[y][x] == '@':
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
-                px, py = x, y
+                player_x, player_y = x, y
             elif level[y][x] == 'd':
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 Diamond(all_sprites, diamonds_group, x, y, tile_images['diamond'])
@@ -70,19 +70,19 @@ def generate_level(level):  # наполнение уровня
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
     # вернем игрока, а также размер поля в клетках
-    new_player = Player(px, py)  # создание игрока
+    new_player = Player(player_x, player_y)  # создание игрока
     return new_player, x, y
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, stun=0, loading=FPS * 2):
+    def __init__(self, pos_x, pos_y, stan=0, loading=FPS * 2):
         super().__init__(player_group, all_sprites)
         self.image = player_image
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.last_moves = [(0, 0)]
         self.score = 0
-        self.stun = stun
+        self.stun = stan
         self.loading = loading
 
     def move(self, m, n):
@@ -123,8 +123,10 @@ class Player(pygame.sprite.Sprite):
     def death(self):
         global player_hp
         player_hp = 0
+        return self.score
 
-    def update(self, player_hp):
+    def update(self, ph):
+        global player_hp
         if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
             self.rect = self.rect.move(-self.last_moves[-1][0], -self.last_moves[-1][1])
             self.last_moves.remove(self.last_moves[-1])
@@ -212,6 +214,7 @@ while running:
                                        stun=information[5])
                     player = Player(px, py, stun, 2*FPS)
                     data = db.get_vars_info()
+                    score = 0
                     for information in data:
                         if information[0] == "player_hp":
                             player_hp = information[1]
@@ -273,4 +276,3 @@ while running:
             time_delta = (pygame.time.get_ticks() - time_delta) / 1000
 # корректный выход из программы при завершении цикла
 pygame.quit()
-
