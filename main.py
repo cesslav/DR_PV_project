@@ -88,7 +88,6 @@ def level_choose_screen(scr, corr=True):  # функция для включен
         intro_rect.x = 10
         text_coord += intro_rect.height
         scr.blit(string_rendered, intro_rect)
-    print(intro_text)
     while True:  # ожидание нажатия для окончания стартскрина
         # screen.fill((0, 0, 0))
         for event in pygame.event.get():
@@ -136,7 +135,6 @@ def level_choose_screen(scr, corr=True):  # функция для включен
                           f"нажмите ENTER",
                           f"некорректный номер уровня"]
         text_coord = 50
-        print(ret_num)
         for line in intro_text:  # построчная печать текста
             string_rendered = font.render(line, 1, pygame.Color("#BD0D9E"))
             intro_rect = string_rendered.get_rect()
@@ -145,7 +143,6 @@ def level_choose_screen(scr, corr=True):  # функция для включен
             intro_rect.x = 10
             text_coord += intro_rect.height
             scr.blit(string_rendered, intro_rect)
-        print(intro_text)
         # pygame.time.wait(1000)
         pygame.display.flip()
         clock.tick(15)  # ограничение частоты обновления экрана для снижения потребляемых ресурсов
@@ -195,16 +192,6 @@ def generate_level(level):  # наполнение уровня
 def terminate(text=""):  # экстренный выход из программы
     pygame.quit()
     sys.exit(text)
-
-
-# создание констант и инициализация библиотеки pygame
-tile_images = {
-               'wall': load_image('box.png'),
-               'empty': load_image('grass.png'),
-               'diamond': load_image('diamond.png', -1)
-               }
-player_image = load_image('player.png', -1)
-tile_width = tile_height = 50
 
 
 # создание групп спрайтов для более удобного обращения со спрайтами
@@ -503,7 +490,7 @@ while running:
                     player.score = score
                     player.extra_move(-150)
                 except Exception as e:
-                    print(e)
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
                     terminate()
     # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
     screen.fill((0, 0, 0))
