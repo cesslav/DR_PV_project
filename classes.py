@@ -87,8 +87,8 @@ class Wall(pygame.sprite.Sprite):
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self, width=550, height=550):
-        self.dx = -3
-        self.dy = -3
+        self.dx = 0
+        self.dy = 0
         self.width = width
         self.height = height
 
@@ -110,6 +110,9 @@ class Camera:
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - self.width // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - self.height // 2)
+
+    def save(self):
+        return self.__class__.__name__, None, None, None, None, None, 1
 
 
 class Empty(pygame.sprite.Sprite):
@@ -155,6 +158,9 @@ class PlayerHP(pygame.sprite.Sprite):
     def update(self, player_hp):
         self.cur_frame = 10 - player_hp
         self.image = self.frames[self.cur_frame]
+
+    def save(self):
+        return self.__class__.__name__, None, None, None, None, None, 1
 
 
 class GreenSnake(pygame.sprite.Sprite):
