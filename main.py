@@ -6,7 +6,6 @@ from add_func import terminate, level_choose_screen, load_level, load_image, loa
 from datetime import datetime
 import pygame
 
-
 pygame.init()
 FPS = 50
 diamonds_left = 0
@@ -16,13 +15,12 @@ screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
 log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
 tile_images = {
-               'wall': load_image('box.png'),
-               'empty': load_image('grass.png'),
-               'diamond': load_image('diamond.png', -1)
-               }
+    'wall': load_image('box.png'),
+    'empty': load_image('grass.png'),
+    'diamond': load_image('diamond.png', -1)
+}
 player_image = load_image('player.png', -1)
 tile_width = tile_height = 50
-
 
 # создание групп спрайтов для более удобного обращения со спрайтами
 all_sprites = pygame.sprite.Group()
@@ -74,6 +72,18 @@ def generate_level(level):  # наполнение уровня
     return new_player, x, y
 
 
+class Hammer(pygame.sprite.Sprite):
+    def __init__(self, all_sprites, tiles_group, x, y, image):
+        super().__init__(all_sprites, tiles_group)
+        self.image = image
+        self.rect = self.image.get_rect().move(
+            tile_width * x, tile_height * y)
+
+    def update(self):
+        # Возможно, вам нужна какая-то логика обновления молотка
+        pass
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, stan=0, loading=FPS * 2):
         super().__init__(player_group, all_sprites)
@@ -84,6 +94,33 @@ class Player(pygame.sprite.Sprite):
         self.score = 0
         self.stun = stan
         self.loading = loading
+        self.hammer_timer = 0
+        self.hammer_duration = 1000  # В миллисекундах, здесь 1000 мс = 1 секунда
+
+    def hammer_strike(self):
+        # Проверяем, активен ли таймер молотков
+        if self.hammer_timer == 0:
+            # Если таймер не активен, создаем молотки
+            # Создание первого молотка на 1 клетку перед игроком в направлении его последнего движения
+            hammer1_x = self.rect.x + self.last_moves[-1][0]
+            hammer1_y = self.rect.y + self.last_moves[-1][1]
+            hammer1 = Hammer(all_sprites, tiles_group, hammer1_x // tile_width, hammer1_y // tile_height,
+                             load_image('diamond.png', -1))
+
+            # Создание второго молотка на 2 клетки в сторону последнего направления
+            hammer2_x = self.rect.x + 2 * self.last_moves[-1][0]
+            hammer2_y = self.rect.y + 2 * self.last_moves[-1][1]
+            hammer2 = Hammer(all_sprites, tiles_group, hammer2_x // tile_width, hammer2_y // tile_height,
+                             load_image('diamond.png', -1))
+            # Применение эффекта оглушения к змеям вокруг молотков
+            for hammer in [hammer1, hammer2]:
+                for snake in pygame.sprite.spritecollide(hammer, enemy_group, False):
+                    snake.apply_stun(1)  # Применение эффекта оглушения на 3 секунды
+            # Активируем таймер
+            self.hammer_timer = pygame.time.get_ticks()
+            for hammer in [hammer1, hammer2]:
+                for snake in pygame.sprite.spritecollide(hammer, enemy_group, False):
+                    snake.apply_stun(2)  # Применение эффекта оглушения на 2 секунды
 
     def move(self, m, n):
         global player_hp
@@ -141,7 +178,19 @@ class Player(pygame.sprite.Sprite):
             self.stun -= 1
         if self.loading > 0:
             self.loading -= 1
-
+        if self.hammer_timer > 0:
+            # Если таймер активен, проверяем прошло ли 1 секунда
+            current_time = pygame.time.get_ticks()
+            if current_time - self.hammer_timer >= self.hammer_duration:
+                # Если прошло, убираем молотки
+                for sprite in all_sprites.copy():
+                    if isinstance(sprite, Hammer):
+                        sprite.kill()
+                # Сбрасываем таймер
+                self.hammer_timer = 0
+            else:
+                # Если таймер активен и молотки присутствуют, игрок не может двигаться
+                return
 
 pygame.init()
 start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
@@ -173,6 +222,8 @@ while running:
                 player.move(0, -50)
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 player.move(0, 50)
+            if event.key == pygame.K_SPACE:
+                player.hammer_strike()
             if event.key == pygame.K_ESCAPE:
                 start_screen(screen, WIDTH, HEIGHT)
             if event.key == pygame.K_q:
@@ -212,7 +263,7 @@ while running:
                             GreenSnake(all_sprites, enemy_group, information[1] / 50, information[2] / 50,
                                        load_image("snakes.png"), dirx=information[3], diry=information[4],
                                        stun=information[5])
-                    player = Player(px, py, stun, 2*FPS)
+                    player = Player(px, py, stun, 2 * FPS)
                     data = db.get_vars_info()
                     score = 0
                     for information in data:

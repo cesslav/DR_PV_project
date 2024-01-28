@@ -198,14 +198,18 @@ class GreenSnake(pygame.sprite.Sprite):
     def save(self):
         return self.__class__.__name__, self.rect.x, self.rect.y, self.direction_x, self.direction_y, self.stun, 1
 
+    def apply_stun(self, duration):
+        self.stun = duration * 50  # Преобразуем секунды в кадры
+
     def move(self, walls_group):
-        m = self.direction_x * self.tile_width
-        n = self.direction_y * self.tile_width
-        self.rect = self.rect.move(m, n)
-        if pygame.sprite.spritecollide(self, walls_group, False):
-            self.rect = self.rect.move(-2 * m, -2 * n)
-            self.direction_x = -self.direction_x
-            self.direction_y = -self.direction_y
+        if self.stun <= 0:  # Проверяем, не находится ли змея в стане
+            m = self.direction_x * self.tile_width
+            n = self.direction_y * self.tile_width
+            self.rect = self.rect.move(m, n)
+            if pygame.sprite.spritecollide(self, walls_group, False):
+                self.rect = self.rect.move(-2 * m, -2 * n)
+                self.direction_x = -self.direction_x
+                self.direction_y = -self.direction_y
 
     def update(self, walls_group):
         self.update_load += 1
@@ -218,3 +222,6 @@ class GreenSnake(pygame.sprite.Sprite):
             self.image = self.frames[self.cur_frame]
             if self.direction_x == 1:  # отражаем по горизонтали
                 self.image = pygame.transform.flip(self.image, True, False)
+
+        if self.stun > 0:
+            self.stun -= 1
