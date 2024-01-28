@@ -211,7 +211,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN and player_hp > 0 and diamonds_left > 0:
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 player.move(50, 0)
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
