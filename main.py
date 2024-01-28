@@ -100,56 +100,53 @@ class Player(pygame.sprite.Sprite):
     def hammer_strike(self):
         # Проверяем, активен ли таймер молотков
         if self.hammer_timer == 0:
-            # Если таймер не активен, создаем молотки
-            # Создание первого молотка на 1 клетку перед игроком в направлении его последнего движения
-            hammer1_x = self.rect.x + self.last_moves[-1][0]
-            hammer1_y = self.rect.y + self.last_moves[-1][1]
-            hammer1 = Hammer(all_sprites, tiles_group, hammer1_x // tile_width, hammer1_y // tile_height,
-                             load_image('diamond.png', -1))
-
-            # Создание второго молотка на 2 клетки в сторону последнего направления
-            hammer2_x = self.rect.x + 2 * self.last_moves[-1][0]
-            hammer2_y = self.rect.y + 2 * self.last_moves[-1][1]
-            hammer2 = Hammer(all_sprites, tiles_group, hammer2_x // tile_width, hammer2_y // tile_height,
-                             load_image('diamond.png', -1))
-            # Применение эффекта оглушения к змеям вокруг молотков
-            for hammer in [hammer1, hammer2]:
-                for snake in pygame.sprite.spritecollide(hammer, enemy_group, False):
-                    snake.apply_stun(1)  # Применение эффекта оглушения на 3 секунды
+            # Если таймер не активен, создаем молоток
+            # Создание молотка на 1 клетку перед игроком в направлении его последнего движения
+            hammer_x = self.rect.x + self.last_moves[-1][0]
+            hammer_y = self.rect.y + self.last_moves[-1][1]
+            hammer = Hammer(all_sprites, tiles_group, hammer_x // tile_width, hammer_y // tile_height,
+                            load_image('diamond.png', -1))
+            # Применяем эффект оглушения к змеям вокруг молотка
+            for snake in pygame.sprite.spritecollide(hammer, enemy_group, False):
+                snake.apply_stun(2)  # Применение эффекта оглушения на 2 секунды
+            # Применяем эффект оглушения к самому игроку
+            self.apply_stun(1)
             # Активируем таймер
             self.hammer_timer = pygame.time.get_ticks()
-            for hammer in [hammer1, hammer2]:
-                for snake in pygame.sprite.spritecollide(hammer, enemy_group, False):
-                    snake.apply_stun(2)  # Применение эффекта оглушения на 2 секунды
 
     def move(self, m, n):
         global player_hp
         global diamonds_left
-        if player_hp > 0 and self.stun < FPS * 0.25 and self.loading == 0:
-            self.rect = self.rect.move(m, n)
-            self.last_moves.append((m, n))
-            if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
-                if m or n:
-                    self.rect = self.rect.move(-m, -n)
-                    player_hp -= 2
-                    self.stun = FPS * 0.75
-                    log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
-                else:
-                    self.rect = self.rect.move(self.last_moves[-1])
-                    self.last_moves.remove(self.last_moves[-1])
-                    player_hp -= 2
-                    self.stun = FPS * 0.75
-                    log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
-            if pygame.sprite.spritecollideany(self, walls_group):
-                if m or n:
-                    self.rect = self.rect.move(-m, -n)
-                else:
-                    self.rect = self.rect.move(self.last_moves[-1])
-                    self.last_moves.remove(self.last_moves[-1])
-            if pygame.sprite.spritecollide(self, diamonds_group, True):
-                self.score += 1
-                diamonds_left -= 1
-                log_file.write(f"[{str(datetime.now())[11:16]}]: player picked diamond\n")
+        if player_hp > 0 and self.stun <= 0 and self.loading == 0:
+            # Проверка на наличие стана
+            if self.stun <= 0:
+                self.rect = self.rect.move(m, n)
+                self.last_moves.append((m, n))
+                if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
+                    if m or n:
+                        self.rect = self.rect.move(-m, -n)
+                        player_hp -= 2
+                        self.stun = FPS * 0.75
+                        log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
+                    else:
+                        self.rect = self.rect.move(self.last_moves[-1])
+                        self.last_moves.remove(self.last_moves[-1])
+                        player_hp -= 2
+                        self.stun = FPS * 0.75
+                        log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
+                if pygame.sprite.spritecollideany(self, walls_group):
+                    if m or n:
+                        self.rect = self.rect.move(-m, -n)
+                    else:
+                        self.rect = self.rect.move(self.last_moves[-1])
+                        self.last_moves.remove(self.last_moves[-1])
+                if pygame.sprite.spritecollide(self, diamonds_group, True):
+                    self.score += 1
+                    diamonds_left -= 1
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: player picked diamond\n")
+
+    def apply_stun(self, duration):
+        self.stun = duration * 50  # Преобразуем секунды в кадры
 
     def save(self):
         return self.__class__.__name__, self.rect.x, self.rect.y, None, None, self.stun, 1
@@ -191,6 +188,7 @@ class Player(pygame.sprite.Sprite):
             else:
                 # Если таймер активен и молотки присутствуют, игрок не может двигаться
                 return
+
 
 pygame.init()
 start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
