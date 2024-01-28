@@ -105,7 +105,7 @@ class Player(pygame.sprite.Sprite):
             hammer_x = self.rect.x + self.last_moves[-1][0]
             hammer_y = self.rect.y + self.last_moves[-1][1]
             hammer = Hammer(all_sprites, tiles_group, hammer_x // tile_width, hammer_y // tile_height,
-                            load_image('diamond.png', -1))
+                            load_image('warhammer.png', -1))
             # Применяем эффект оглушения к змеям вокруг молотка
             for snake in pygame.sprite.spritecollide(hammer, enemy_group, False):
                 snake.apply_stun(2)  # Применение эффекта оглушения на 2 секунды
@@ -194,7 +194,7 @@ pygame.init()
 start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
 # Локальные объекты и функции, которые больше нигде не понадобятся.
 pygame.display.set_caption("DMPV")
-pygame.display.set_icon(load_image("player.png", -1))
+# pygame.display.set_icon(load_image("ico.ico", -1))
 hp = PlayerHP(all_sprites, player_group, load_image('hp.png', -1))
 font1, font2 = pygame.font.Font(None, 20), pygame.font.Font(None, 50)
 death_switch, running, s = True, True, pygame.mixer.Sound(os.path.join('data/sounds', "game_over.mp3"))
