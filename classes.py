@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sqlite3
 from datetime import datetime
 import pygame
@@ -184,7 +183,6 @@ class GreenSnake(pygame.sprite.Sprite):
             else:
                 self.direction_x = 1  # Направление вправо для 'g'
                 self.direction_y = 0  # Направление по вертикали для 'g'
-
         self.update_load = 0
         self.stun = stun
 

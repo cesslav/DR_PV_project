@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 import os
 from classes import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
@@ -222,9 +221,7 @@ while running:
                 try:
                     for sprite in all_sprites:
                         sprite.kill()
-                    # pygame.quit()
-                    # pygame.init()
-                    # screen = pygame.display.set_mode(SCREEN_SIZE)
+
                     data = db.get_sprites_info()
                     px = 0
                     py = 0
