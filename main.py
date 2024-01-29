@@ -194,7 +194,7 @@ pygame.init()
 start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
 # Локальные объекты и функции, которые больше нигде не понадобятся.
 pygame.display.set_caption("DMPV")
-# pygame.display.set_icon(load_image("ico.ico", -1))
+pygame.display.set_icon(load_image("ico.ico", -1))
 hp = PlayerHP(all_sprites, player_group, load_image('hp.png', -1))
 font1, font2 = pygame.font.Font(None, 20), pygame.font.Font(None, 50)
 death_switch, running, s = True, True, pygame.mixer.Sound(os.path.join('data/sounds', "game_over.mp3"))
@@ -285,14 +285,14 @@ while running:
     player_group.draw(screen)
     if diamonds_left != 0:
         screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
-                                 1, pygame.Color('red')), (0, 25, 100, 10))
+                                 True, pygame.Color('red')), (0, 25, 100, 10))
     else:
         screen.blit(font1.render(f"TIME {time_delta}",
-                                 1, pygame.Color('red')), (0, 25, 100, 10))
-        screen.blit(font2.render("YOU WIN!", 1,
+                                 True, pygame.Color('red')), (0, 25, 100, 10))
+        screen.blit(font2.render("YOU WIN!", True,
                                  pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
     if player_hp == 0 and diamonds_left != 0:
-        screen.blit(font2.render("Game Over", 1,
+        screen.blit(font2.render("Game Over", True,
                                  pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
         if death_switch:
             pygame.mixer.music.stop()
