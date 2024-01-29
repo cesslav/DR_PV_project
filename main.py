@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # импорты необходимых библиотек и функций
 import os
-from classes import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake
+from classes import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
 from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen
 from datetime import datetime
 import pygame
@@ -70,18 +70,6 @@ def generate_level(level):  # наполнение уровня
     # вернем игрока, а также размер поля в клетках
     new_player = Player(player_x, player_y)  # создание игрока
     return new_player, x, y
-
-
-class Hammer(pygame.sprite.Sprite):
-    def __init__(self, all_sprites, tiles_group, x, y, image):
-        super().__init__(all_sprites, tiles_group)
-        self.image = image
-        self.rect = self.image.get_rect().move(
-            tile_width * x, tile_height * y)
-
-    def update(self):
-        # Возможно, вам нужна какая-то логика обновления молотка
-        pass
 
 
 class Player(pygame.sprite.Sprite):

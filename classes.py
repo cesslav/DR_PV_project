@@ -225,3 +225,15 @@ class GreenSnake(pygame.sprite.Sprite):
 
         if self.stun > 0:
             self.stun -= 1
+
+
+class Hammer(pygame.sprite.Sprite):
+    def __init__(self, all_sprites, tiles_group, x, y, image, tile_width=50):
+        super().__init__(all_sprites, tiles_group)
+        self.image = image
+        self.rect = self.image.get_rect().move(
+            tile_width * x, tile_width * y)
+
+    def update(self):
+        # Возможно, вам нужна какая-то логика обновления молотка
+        pass
