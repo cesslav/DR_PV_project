@@ -16,7 +16,10 @@ class DBClass:
         max_id = []
         for i in lead_id:
             max_id.append(i[0])
-        max_id = max(max_id) + 1
+        if max_id:
+            max_id = max(max_id) + 1
+        else:
+            max_id = 0
         self.cursor.execute("""
             INSERT INTO Leaders
             VALUES (?,?,?,?,?)
