@@ -29,6 +29,7 @@ class DBClass:
         self.connection.commit()
         # log_file.write(f"[{str(datetime.now())[11:16]}]: winner added to leaderboard as {user_name}\n")
 
+
     def save_game_vars(self, player_hp, score):
         self.cursor.execute("""
                                     INSERT INTO GameVars
@@ -214,7 +215,7 @@ class GreenSnake(pygame.sprite.Sprite):
 
     def update(self, walls_group):
         self.update_load += 1
-        if self.update_load % 30 == 0:
+        if self.update_load % 140 == 0:
             self.move(walls_group)
             if self.direction_x == 1:
                 self.cur_frame = (self.cur_frame - 1) % 8  # движение вправо (колонки с 9 по 2)

@@ -73,7 +73,8 @@ def level_choose_screen(scr, corr=True):  # функция для включен
                 terminate()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    return int(ret_num)
+                    print(ret_num)
+                    return ret_num
                 elif event.key == pygame.K_0:
                     ret_num = ret_num + "0"
                 elif event.key == pygame.K_1:
@@ -94,6 +95,10 @@ def level_choose_screen(scr, corr=True):  # функция для включен
                     ret_num = ret_num + "8"
                 elif event.key == pygame.K_9:
                     ret_num = ret_num + "9"
+                elif event.key == pygame.K_PERIOD:
+                    ret_num = ret_num + "."
+                elif event.key == pygame.K_MINUS:
+                    ret_num = ret_num + ":"
                 elif event.key == pygame.K_BACKSPACE:
                     ret_num = ret_num[:-1]
         scr.fill("black")
@@ -132,14 +137,17 @@ def terminate(text=""):  # экстренный выход из программ
 
 
 def load_level(filename):  # функция для предварительной обработки уровня
-    filename = resource_path("data/levels/" + filename)
-    # читаем уровень, убирая символы перевода строки
-    with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    # и подсчитываем максимальную длину
-    max_width = max(map(len, level_map))
-    # дополняем каждую строку пустыми клетками ('.')
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+    if ":" in filename and "." in filename:
+        pass
+    else:
+        filename = resource_path("data/levels/" + filename)
+        # читаем уровень, убирая символы перевода строки
+        with open(filename, 'r') as mapFile:
+            level_map = [line.strip() for line in mapFile]
+        # и подсчитываем максимальную длину
+        max_width = max(map(len, level_map))
+        # дополняем каждую строку пустыми клетками ('.')
+        return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
 def resource_path(relative):

@@ -1,12 +1,17 @@
 # импорты необходимых библиотек и функций
+import json
 import os
 from classes import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
 from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen
 from datetime import datetime
 import pygame
+import socket
+ip = 0
+port = 0
 
 pygame.init()
-FPS = 50
+online = False
+FPS = 140
 diamonds_left = 0
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
 player_hp = 10
@@ -16,11 +21,17 @@ log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
 tile_images = {
     'wall': load_image('box.png'),
     'empty': load_image('grass.png'),
-    'diamond': load_image('diamond.png', -1)
+    'diamond': load_image('diamond.png', -1),
+    'player': load_image('player.png', -1),
+    'enemy': load_image('player.png', -1)
 }
-player_image = load_image('player.png', -1)
 tile_width = tile_height = 50
-
+moves = {'right': 0,
+         'left': 0,
+         'up:': 0,
+         'down': 0,
+         'bite': 0,
+         'exit': 0}
 # создание групп спрайтов для более удобного обращения со спрайтами
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -30,13 +41,73 @@ walls_group = pygame.sprite.Group()
 diamonds_group = pygame.sprite.Group()
 
 
+def load_game_func():
+    try:
+        for sprite in all_sprites:
+            sprite.kill()
+
+        data = db.get_sprites_info()
+        px = 0
+        py = 0
+        stun = 0
+        diamonds_left = 0
+        for information in data:
+            if information[0] == "Empty":
+                Empty(all_sprites, tiles_group, information[1] / 50,
+                      information[2] / 50, tile_images['empty'])
+            elif information[0] == "Wall":
+                Wall(all_sprites, tiles_group, walls_group, information[1] / 50,
+                     information[2] / 50, tile_images['wall'])
+            elif information[0] == "Player":
+                px, py, stun = information[1], information[2], information[5]
+                if stun > FPS * 2:
+                    stun = FPS * 2
+            elif information[0] == "Diamond":
+                Diamond(all_sprites, diamonds_group, information[1] / 50,
+                        information[2] / 50, tile_images['diamond'])
+                diamonds_left += 1
+            elif information[0] == "GreenSnake":
+                GreenSnake(all_sprites, enemy_group, information[1] / 50, information[2] / 50,
+                           load_image("snakes.png"), dirx=information[3], diry=information[4],
+                           stun=information[5])
+        player = Player(px, py, stun, 2 * FPS)
+        data = db.get_vars_info()
+        score = 0
+        for information in data:
+            if information[0] == "player_hp":
+                player_hp = information[1]
+            if information[0] == "score":
+                score = information[1]
+        log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
+        camera = Camera()
+        hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
+        player.score = score
+        player.extra_move(-150)
+    except Exception as e:
+        log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
+        terminate()
+
+
 def ttg_level_num(scr, isst):
+    global online, ip, port
     try:
         # mode = str(input("Enter game mode(t/q): "))
-        pl, x, y = generate_level(load_level(f"level{level_choose_screen(scr, isst)}.txt"))
+        txt = level_choose_screen(scr, isst)
+        print(txt)
+        if not ("." in txt and ":" in txt):
+            txt = f"level{txt}.txt"
+            pl = generate_level(load_level(txt))
+        else:
+            ip, port = txt.split(":")
+            port = int(port)
+            ip = "localhost"
+            pl = Player(0, 0)
+            online = True
+        print(online)
         bd = DBClass('saves.db')
-        return bd, pl, x, y
+        return bd, pl
     except Exception as f:
+        print(f)
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{f}'\n")
         return ttg_level_num(scr, False)
 
@@ -46,40 +117,43 @@ def generate_level(level):  # наполнение уровня
     player_x = 0
     player_y = 0
     diamonds_left = 0
-    new_player, x, y = None, None, None
     for y in range(len(level)):  # создание спрайтов уровня
         for x in range(len(level[y])):
-            if level[y][x] == '.':
+            if '.' in level[y][x]:
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
-            elif level[y][x] == '#':
+            if '#' in level[y][x]:
                 Wall(all_sprites, tiles_group, walls_group, x, y, tile_images['wall'])
-            elif level[y][x] == '@':
+            if '@' in level[y][x]:
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 player_x, player_y = x, y
-            elif level[y][x] == 'd':
+            if 'd' in level[y][x]:
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 Diamond(all_sprites, diamonds_group, x, y, tile_images['diamond'])
                 diamonds_left += 1
-            elif level[y][x] == 'g':
+            if 'g' in level[y][x]:
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='g')
-            elif level[y][x] == 'q':
+            if 'q' in level[y][x]:
                 Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                 GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
+            if 'M' in level[y][x]:
+                Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                Hammer(all_sprites, tiles_group, x, y,
+                       load_image('warhammer.png', -1))
     # вернем игрока, а также размер поля в клетках
     new_player = Player(player_x, player_y)  # создание игрока
-    return new_player, x, y
+    return new_player
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, stan=0, loading=FPS * 2):
+    def __init__(self, pos_x, pos_y, stun=0, loading=FPS * 2):
         super().__init__(player_group, all_sprites)
-        self.image = player_image
+        self.image = tile_images["player"]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.last_moves = [(0, 0)]
         self.score = 0
-        self.stun = stan
+        self.stun = stun
         self.loading = loading
         self.hammer_timer = 0
         self.hammer_duration = 1000  # В миллисекундах, здесь 1000 мс = 1 секунда
@@ -188,17 +262,25 @@ death_switch, running, s = True, True, pygame.mixer.Sound(os.path.join('data/sou
 # Выбор, загрузка уровня и безопасный выход в случае ошибки
 # (в будущем будет добавлено автоотправление письма-фидбека о баге)
 log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
-db, player, level_x, level_y = ttg_level_num(screen, True)
+db, player = ttg_level_num(screen, True)
 camera, clock = Camera(), pygame.time.Clock()
 # Главный Цикл
 time_delta = pygame.time.get_ticks()
 load_sound("background.mp3")
 log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
+
+if online:
+    my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # делаем переменную, ссылающуюся на сокет сервера
+    my_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)  # отключаем создание крупных пакетов
+    # отключение алгоритма Нейгла
+    my_socket.connect((ip, port))
+    print("online")
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.KEYDOWN and player_hp > 0 and diamonds_left > 0:
+        if event.type == pygame.KEYDOWN and player_hp > 0 and diamonds_left > 0 and not online:
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 player.move(50, 0)
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
@@ -218,65 +300,39 @@ while running:
                         db.save_game_sprite(sprite.save())
                 db.save_game_vars(player_hp, player.score)
             if event.key == pygame.K_e:
-                try:
-                    for sprite in all_sprites:
-                        sprite.kill()
-
-                    data = db.get_sprites_info()
-                    px = 0
-                    py = 0
-                    stun = 0
-                    diamonds_left = 0
-                    for information in data:
-                        if information[0] == "Empty":
-                            Empty(all_sprites, tiles_group, information[1] / 50,
-                                  information[2] / 50, tile_images['empty'])
-                        elif information[0] == "Wall":
-                            Wall(all_sprites, tiles_group, walls_group, information[1] / 50,
-                                 information[2] / 50, tile_images['wall'])
-                        elif information[0] == "Player":
-                            px, py, stun = information[1], information[2], information[5]
-                            if stun > FPS * 2:
-                                stun = FPS * 2
-                        elif information[0] == "Diamond":
-                            Diamond(all_sprites, diamonds_group, information[1] / 50,
-                                    information[2] / 50, tile_images['diamond'])
-                            diamonds_left += 1
-                        elif information[0] == "GreenSnake":
-                            GreenSnake(all_sprites, enemy_group, information[1] / 50, information[2] / 50,
-                                       load_image("snakes.png"), dirx=information[3], diry=information[4],
-                                       stun=information[5])
-                    player = Player(px, py, stun, 2 * FPS)
-                    data = db.get_vars_info()
-                    score = 0
-                    for information in data:
-                        if information[0] == "player_hp":
-                            player_hp = information[1]
-                        if information[0] == "score":
-                            score = information[1]
-                    log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
-                    camera = Camera()
-                    hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
-                    player.score = score
-                    player.extra_move(-150)
-                except Exception as e:
-                    log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
-                    terminate()
+                load_game_func()
+        elif event.type == pygame.KEYDOWN and player_hp > 0 and online:
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                moves["right"] += 1
+            if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                moves["left"] += 1
+            if event.key == pygame.K_UP or event.key == pygame.K_w:
+                moves["up"] += 1
+            if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                moves["down"] += 1
+            if event.key == pygame.K_SPACE:
+                moves["byte"] += 1
+            if event.key == pygame.K_ESCAPE:
+                moves["exit"] += 1
     # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
-    screen.fill((0, 0, 0))
-    all_sprites.draw(screen)
-    enemy_group.draw(screen)
-    walls_group.draw(screen)
-    player_group.draw(screen)
-    if diamonds_left != 0:
+    if not online:
+        screen.fill((0, 0, 0))
+        all_sprites.draw(screen)
+        enemy_group.draw(screen)
+        walls_group.draw(screen)
+        player_group.draw(screen)
+    else:
+        data = my_socket.recv(4096)
+        data = json.loads(data.decode())
+    if diamonds_left != 0 and not online:
         screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
                                  True, pygame.Color('red')), (0, 25, 100, 10))
-    else:
+    elif diamonds_left == 0 and not online:
         screen.blit(font1.render(f"TIME {time_delta}",
                                  True, pygame.Color('red')), (0, 25, 100, 10))
         screen.blit(font2.render("YOU WIN!", True,
                                  pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-    if player_hp == 0 and diamonds_left != 0:
+    if (player_hp == 0 and diamonds_left != 0) or (player_hp == 0 and online):
         screen.blit(font2.render("Game Over", True,
                                  pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
         if death_switch:
@@ -288,13 +344,22 @@ while running:
     clock.tick(FPS)
     # Обновление всех спрайтов
     # all_sprites.update()
-    for sprite in all_sprites:
-        if sprite in enemy_group:
-            sprite.update(walls_group)
-        elif sprite in player_group:
-            sprite.update(player_hp)
-        else:
-            sprite.update()
+    if not online:
+        for sprite in all_sprites:
+            if sprite in enemy_group:
+                sprite.update(walls_group)
+            elif sprite in player_group:
+                sprite.update(player_hp)
+            else:
+                sprite.update()
+    else:
+        my_socket.send(json.dumps(moves).encode())
+        moves = {'right': 0,
+                 'left': 0,
+                 'up:': 0,
+                 'down': 0,
+                 'bite': 0,
+                 'exit': 0}
     camera.update(player)
     for sprite in all_sprites:
         if not isinstance(sprite, PlayerHP):
