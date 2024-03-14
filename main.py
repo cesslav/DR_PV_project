@@ -322,8 +322,10 @@ while running:
         walls_group.draw(screen)
         player_group.draw(screen)
     else:
-        data = my_socket.recv(4096)
-        data = json.loads(data.decode())
+        data = my_socket.recv(1024)
+        data = data.decode()
+        if data:
+            data = json.loads(data)
     if diamonds_left != 0 and not online:
         screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
                                  True, pygame.Color('red')), (0, 25, 100, 10))

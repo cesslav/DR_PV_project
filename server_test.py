@@ -14,7 +14,8 @@ main_socket.listen(4)  # включаем прослушку порта, выс�
 
 next_id = [0, 1, 2, 3]
 players_sockets = {}
-field = [[".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
+FIELD = [
+         [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
          [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
          [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
          [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
@@ -31,7 +32,6 @@ field = [[".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
 def close_player_connection(sock):
     players_sockets[sock][0].close()
     next_id.append(sock)
-    print(next_id)
     players_sockets[sock] = ''
 
 
@@ -46,14 +46,19 @@ def apply_players_moves(sock):
         close_player_connection(sock)
 
 
-def give_answer(sock):
-    data = {"field": field,
-            "player_info": players_sockets[sock]}
+def give_answer(sock, field_to_answer):
+    data = {"field": field_to_answer,
+            "player_info": players_sockets[sock][1:]}
+    # data = [field, players_sockets[sock][1:]]
+    print(json.dumps(data))
     players_sockets[sock][0].send(json.dumps(data).encode())
 
 
 if __name__ == "__main__":
     while True:
+        for i in list(players_sockets):
+            if not players_sockets[i]:
+                del players_sockets[i]
         # блок проверки на наличие запросов на подключение
         try:
             new_socket, address = main_socket.accept()
@@ -61,7 +66,6 @@ if __name__ == "__main__":
             new_socket.setblocking(0)
             # players_sockets.append(new_socket)
             players_sockets[next_id.pop(0)] = [new_socket, 10, 0, 0, 0]  # socket, hp, stun, x, y
-            print(next_id)
         except Exception as e:
             pass
 
@@ -72,9 +76,19 @@ if __name__ == "__main__":
             except Exception as e:
                 pass
 
+        fta = FIELD.copy()
+        print(FIELD)
+        for id in players_sockets:
+            if players_sockets[id]:
+                fta[players_sockets[id][3]][players_sockets[id][4]] = (
+                        fta[players_sockets[id][3]][players_sockets[id][4]] + str(id))
+
         # отправляем ответ
         for socket in players_sockets:
             try:
-                give_answer(socket)
+                give_answer(socket, fta)
             except Exception as e:
+                print("can't give answer", e)
                 close_player_connection(socket)
+
+        time.sleep(0.01)
