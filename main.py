@@ -99,8 +99,9 @@ def ttg_level_num(scr, isst):
             pl = generate_level(load_level(txt))
         else:
             ip, port = txt.split(":")
-            port = int(port)
-            ip = "localhost"
+            if ip:
+                port = int(port)
+                ip = "localhost"
             pl = Player(0, 0)
             online = True
         print(online)
@@ -322,7 +323,7 @@ while running:
         walls_group.draw(screen)
         player_group.draw(screen)
     else:
-        data = my_socket.recv(1024)
+        data = my_socket.recv(32768)
         data = data.decode()
         if data:
             data = json.loads(data)
