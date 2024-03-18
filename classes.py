@@ -97,18 +97,19 @@ class Camera:
         self.height = height
 
     # сдвинуть объект obj на смещение камеры
-    def apply(self, obj):
+    def apply(self, obj, online):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
 
-        if -1 > obj.rect.x:
-            obj.rect.x += self.width
-        elif obj.rect.x > self.width - 1:
-            obj.rect.x -= self.width
-        if -1 > obj.rect.y:
-            obj.rect.y += self.height
-        elif obj.rect.y > self.height - 1:
-            obj.rect.y -= self.height
+        if not online:
+            if -1 > obj.rect.x:
+                obj.rect.x += self.width
+            elif obj.rect.x > self.width - 1:
+                obj.rect.x -= self.width
+            if -1 > obj.rect.y:
+                obj.rect.y += self.height
+            elif obj.rect.y > self.height - 1:
+                obj.rect.y -= self.height
 
     # позиционировать камеру на объекте target
     def update(self, target):

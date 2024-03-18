@@ -73,7 +73,6 @@ def level_choose_screen(scr, corr=True):  # функция для включен
                 terminate()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    print(ret_num)
                     return ret_num
                 elif event.key == pygame.K_0:
                     ret_num = ret_num + "0"
