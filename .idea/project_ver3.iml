@@ -5,11 +5,14 @@
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.9 (DR_PV_project)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="versionSpecifier" value="Greater or equal (&gt;=x.y.z)" />
     <option name="removeUnused" value="true" />
+  </component>
+  <component name="SonarLintModuleSettings">
+    <option name="uniqueId" value="27d03948-6893-47c2-8c7a-cb7449a21b9e" />
   </component>
 </module>

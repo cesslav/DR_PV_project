@@ -19,7 +19,7 @@ main_socket.listen(4)  # включаем прослушку порта, выс�
 
 next_id = [0, 1, 2, 3]
 players_sockets = {}
-FPS = 100
+FPS = 50
 tile_images = {
     'wall': load_image('box.png'),
     'empty': load_image('grass.png'),
@@ -36,11 +36,9 @@ diamonds_group = pygame.sprite.Group()
 FIELD = [
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", "g", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", "g", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
@@ -55,6 +53,8 @@ FIELD = [
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "g", "#"],
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ]
 
@@ -68,19 +68,21 @@ def close_player_connection(sock):
 def apply_players_moves(sock):
     data = players_sockets[sock][0].recv(1024)
     data = json.loads(data.decode())
-    players_sockets[sock][4] = (players_sockets[sock][4] + data["y_move"] * 50) % len(FIELD)
-    players_sockets[sock][3] = (players_sockets[sock][3] + data["x_move"] * 50) % len(FIELD[0])
-    if data["bite"] < 0:
+    players_sockets[sock][1].move(data['x_move'] * 50,
+                                  data['y_move'] * 50)
+    print(players_sockets[sock][1].rect)
+    if int(data['bite']) < 0:
         close_player_connection(sock)
+    elif int(data['bite']) > 0:
+        players_sockets[sock][1].hammer_strike()
 
 
 def give_answer(sock):
     sprites = []
     for i in all_sprites:
-        sprites.append([i.save()])
+        sprites.append(i.save())
     data = {"field": sprites,
-            "player_info": players_sockets[sock][1:]}
-    # data = [field, players_sockets[sock][1:]]
+            "player_info": players_sockets[sock][2:]}
     players_sockets[sock][0].send(json.dumps(data).encode())
 
 
@@ -93,45 +95,47 @@ def generate_level(level):  # наполнение уровня
         for y in range(len(level)):  # создание спрайтов уровня
             for x in range(len(level[y])):
                 if '.' in level[y][x]:
-                    Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    pass
                 if '#' in level[y][x]:
                     Wall(all_sprites, tiles_group, walls_group, x, y, tile_images['wall'])
                 if '@' in level[y][x]:
-                    Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                     player_x, player_y = x, y
                 if 'd' in level[y][x]:
-                    Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, x, y, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[y][x]:
-                    Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[y][x]:
-                    Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[y][x]:
-                    Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
                     Hammer(all_sprites, tiles_group, x, y,
                            load_image('warhammer.png', -1))
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
                 if '.' in level[string_num][cell_num]:
-                    Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    pass
+                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
                 if '#' in level[string_num][cell_num]:
                     Wall(all_sprites, tiles_group, walls_group, string_num, cell_num, tile_images['wall'])
                 if 'd' in level[string_num][cell_num]:
-                    Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, string_num, cell_num, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[string_num][cell_num]:
-                    Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[string_num][cell_num]:
-                    Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[string_num][cell_num]:
-                    Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
                     Hammer(all_sprites, tiles_group, string_num, cell_num,
                            load_image('warhammer.png', -1))
     # вернем игрока, а также размер поля в клетках
@@ -142,6 +146,8 @@ def generate_level(level):  # наполнение уровня
 pygame.init()
 running, clock = True, pygame.time.Clock()
 generate_level(FIELD)
+screen = pygame.display.set_mode((550, 550))
+camera = Camera(screen)
 
 if __name__ == "__main__":
     while True:
@@ -155,8 +161,7 @@ if __name__ == "__main__":
             new_socket.setblocking(0)
             # players_sockets.append(new_socket)
             new_id = next_id.pop(0)
-            Player(50, 50)
-            players_sockets[new_id] = [new_socket, new_id, 10]  # socket, id, Class(x, y), hp
+            players_sockets[new_id] = [new_socket, Player(2, 2), new_id, 10]  # socket, id, Class(x, y), hp
         except Exception as e:
             pass
 
@@ -186,4 +191,15 @@ if __name__ == "__main__":
                 except Exception:
                     pass
 
-        clock.tick(0.1)
+        screen.fill((0, 0, 0))
+        all_sprites.draw(screen)
+        enemy_group.draw(screen)
+        walls_group.draw(screen)
+        player_group.draw(screen)
+        pygame.display.flip()
+
+        for sprite in all_sprites:
+            if not isinstance(sprite, PlayerHP):
+                camera.apply(sprite, True)
+
+        clock.tick(FPS)

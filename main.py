@@ -39,11 +39,12 @@ walls_group = pygame.sprite.Group()
 diamonds_group = pygame.sprite.Group()
 
 
-def load_game_func(data):
+def load_game(data, health=None):
+    global player_hp, hp, camera, diamonds_left
     try:
         for sprite in all_sprites:
             sprite.kill()
-
+        # print(data)
         # data = db.get_sprites_info()
         px = 0
         py = 0
@@ -70,20 +71,24 @@ def load_game_func(data):
                            load_image("snakes.png"), dirx=information[3], diry=information[4],
                            stun=information[5])
         player = Player(px, py, stun, 2 * FPS)
-        data = db.get_vars_info()
-        score = 0
-        for information in data:
-            if information[0] == "player_hp":
-                player_hp = information[1]
-            if information[0] == "score":
-                score = information[1]
+        if not online:
+            data = db.get_vars_info()
+            score = 0
+            for information in data:
+                if information[0] == "player_hp":
+                    player_hp = information[1]
+                if information[0] == "score":
+                    score = information[1]
+        else:
+            player_hp = health
+            score = 0
         log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
         camera = Camera()
         hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
         player.score = score
         player.extra_move(-150)
-        print(all_sprites)
     except Exception as e:
+        print(e)
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
         terminate()
 
@@ -232,6 +237,7 @@ class Player(pygame.sprite.Sprite):
                     self.score += 1
                     diamonds_left -= 1
                     log_file.write(f"[{str(datetime.now())[11:16]}]: player picked diamond\n")
+        print("move", m, n)
 
     def apply_stun(self, duration):
         self.stun = duration * 50  # Преобразуем секунды в кадры
@@ -277,6 +283,7 @@ class Player(pygame.sprite.Sprite):
                 # Если таймер активен и молотки присутствуют, игрок не может двигаться
                 return
 
+
 if __name__ == "__main__":
     pygame.init()
     start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
@@ -290,7 +297,6 @@ if __name__ == "__main__":
     # (в будущем будет добавлено автоотправление письма-фидбека о баге)
     log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
     db, player = ttg_level_num(screen, True)
-    print(db.get_sprites_info())
     camera, clock = Camera(), pygame.time.Clock()
     # Главный Цикл
     time_delta = pygame.time.get_ticks()
@@ -305,7 +311,7 @@ if __name__ == "__main__":
         my_socket.connect((ip, port))
         data = json.loads(my_socket.recv(16384).decode())
         my_id = str(data["player_info"][0])
-        print(all_ids, my_id)
+        # print(all_ids, my_id)
         all_ids.remove(my_id)
         all_ids = set(all_ids)
 
@@ -330,11 +336,10 @@ if __name__ == "__main__":
                     db.clear_db()
                     for sprite in all_sprites:
                         if not isinstance(sprite, Camera) and not isinstance(sprite, PlayerHP):
-                            print(type(sprite))
                             db.save_game_sprite(sprite.save())
                     db.save_game_vars(player_hp, player.score)
                 if event.key == pygame.K_e:
-                    load_game_func(db.get_sprites_info())
+                    load_game(db.get_sprites_info())
             elif event.type == pygame.KEYUP and online:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     moves['x_move'] = moves['x_move'] + 1
@@ -359,9 +364,7 @@ if __name__ == "__main__":
             data = data.decode()
             if data:
                 data = json.loads(data)
-                player_hp = data["player_info"][0]
-                # print(data["field"])
-                load_game_func(data["field"])
+                load_game(data["field"], data["player_info"][1])
         if diamonds_left != 0 and not online:
             screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
                                      True, pygame.Color('red')), (0, 25, 100, 10))
@@ -381,7 +384,6 @@ if __name__ == "__main__":
         pygame.display.flip()
         clock.tick(FPS)
         # Обновление всех спрайтов
-        # all_sprites.update()
         if not online:
             for sprite in all_sprites:
                 if sprite in enemy_group:
