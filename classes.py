@@ -29,7 +29,6 @@ class DBClass:
         self.connection.commit()
         # log_file.write(f"[{str(datetime.now())[11:16]}]: winner added to leaderboard as {user_name}\n")
 
-
     def save_game_vars(self, player_hp, score):
         self.cursor.execute("""
                                     INSERT INTO GameVars

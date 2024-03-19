@@ -77,7 +77,7 @@ def apply_players_moves(sock):
 def give_answer(sock):
     sprites = []
     for i in all_sprites:
-        sprites.append(i)
+        sprites.append([i.save()])
     data = {"field": sprites,
             "player_info": players_sockets[sock][1:]}
     # data = [field, players_sockets[sock][1:]]
@@ -186,4 +186,4 @@ if __name__ == "__main__":
                 except Exception:
                     pass
 
-        clock.tick(24)
+        clock.tick(0.1)
