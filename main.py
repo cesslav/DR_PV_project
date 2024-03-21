@@ -1,8 +1,8 @@
 # импорты необходимых библиотек и функций
 import json
 import os
-from classes import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
-from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen
+from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
+from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen, first_connection
 from datetime import datetime
 import pygame
 import socket
@@ -70,7 +70,7 @@ def load_game(data, health=None):
                 GreenSnake(all_sprites, enemy_group, information[1] / 50, information[2] / 50,
                            load_image("snakes.png"), dirx=information[3], diry=information[4],
                            stun=information[5])
-        player = Player(px, py, stun, 2 * FPS)
+        player = Player(px, py, stun)
         if not online:
             data = db.get_vars_info()
             score = 0
@@ -178,7 +178,7 @@ def generate_level(level):  # наполнение уровня
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, stun=0, loading=FPS * 2):
+    def __init__(self, pos_x, pos_y, stun=0):
         super().__init__(player_group, all_sprites)
         self.image = tile_images["player"]
         self.rect = self.image.get_rect().move(
@@ -186,7 +186,6 @@ class Player(pygame.sprite.Sprite):
         self.last_moves = [(0, 0)]
         self.score = 0
         self.stun = stun
-        self.loading = loading
         self.hammer_timer = 0
         self.hammer_duration = 1000  # В миллисекундах, здесь 1000 мс = 1 секунда
 
@@ -210,7 +209,7 @@ class Player(pygame.sprite.Sprite):
     def move(self, m, n):
         global player_hp
         global diamonds_left
-        if player_hp > 0 and self.stun <= 0 and self.loading == 0:
+        if player_hp > 0 and self.stun <= 0:
             # Проверка на наличие стана
             if self.stun <= 0:
                 self.rect = self.rect.move(m, n)
@@ -253,7 +252,7 @@ class Player(pygame.sprite.Sprite):
         player_hp = 0
         return self.score
 
-    def update(self, ph):
+    def update(self, ph=0):
         global player_hp
         if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
             self.rect = self.rect.move(-self.last_moves[-1][0], -self.last_moves[-1][1])
@@ -265,10 +264,8 @@ class Player(pygame.sprite.Sprite):
             player_hp = 0
         if not self.last_moves:
             self.last_moves = [(0, 0)]
-        if self.stun > 0 and self.loading == 0:
+        if self.stun > 0:
             self.stun -= 1
-        if self.loading > 0:
-            self.loading -= 1
         if self.hammer_timer > 0:
             # Если таймер активен, проверяем прошло ли 1 секунда
             current_time = pygame.time.get_ticks()
@@ -309,9 +306,7 @@ if __name__ == "__main__":
         my_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)  # отключаем создание крупных пакетов
         # отключение алгоритма Нейгла
         my_socket.connect((ip, port))
-        data = json.loads(my_socket.recv(16384).decode())
-        my_id = str(data["player_info"][0])
-        # print(all_ids, my_id)
+        my_id = first_connection(my_socket)
         all_ids.remove(my_id)
         all_ids = set(all_ids)
 
@@ -360,11 +355,14 @@ if __name__ == "__main__":
         walls_group.draw(screen)
         player_group.draw(screen)
         if online:
-            data = my_socket.recv(16384)
-            data = data.decode()
-            if data:
-                data = json.loads(data)
-                load_game(data["field"], data["player_info"][1])
+            try:
+                data = my_socket.recv(8192)
+                data = data.decode()
+                if data:
+                    data = json.loads(data)
+                    load_game(data["field"], data["player_info"][1])
+            except Exception as e:
+                pass
         if diamonds_left != 0 and not online:
             screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
                                      True, pygame.Color('red')), (0, 25, 100, 10))

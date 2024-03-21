@@ -1,6 +1,18 @@
 import os
 import sys
 import pygame
+import json
+
+
+def first_connection(socket):
+    try:
+        data = socket.recv(8192).decode()
+        data = json.loads(data)
+        my_id = str(data["player_info"][0])
+        return my_id
+    except Exception as e:
+        print(e)
+        return first_connection(socket)
 
 
 def start_screen(scr, width, height):  # функция для включения стартскрина

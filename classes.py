@@ -115,19 +115,20 @@ class Camera:
         self.dx = -(target.rect.x + target.rect.w // 2 - self.width // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - self.height // 2)
 
+
     def save(self):
         return self.__class__.__name__, None, None, None, None, None, 1
 
 
-class Empty(pygame.sprite.Sprite):
-    def __init__(self, all_sprites, tiles_group, pos_x, pos_y, img, tile_width=50):
-        super().__init__(tiles_group, all_sprites)
-        self.image = img
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_width * pos_y)
-
-    def save(self):
-        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
+# class Empty(pygame.sprite.Sprite):
+#     def __init__(self, all_sprites, tiles_group, pos_x, pos_y, img, tile_width=50):
+#         super().__init__(tiles_group, all_sprites)
+#         self.image = img
+#         self.rect = self.image.get_rect().move(
+#             tile_width * pos_x, tile_width * pos_y)
+#
+#     def save(self):
+#         return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
 
 
 class Diamond(pygame.sprite.Sprite):
@@ -238,4 +239,21 @@ class Hammer(pygame.sprite.Sprite):
 
     def update(self):
         # Возможно, вам нужна какая-то логика обновления молотка
+        pass
+
+
+class The_Observer(pygame.sprite.Sprite):
+    def __init__(self, all_sprites, img, pos_x=0, pos_y=0):
+        super().__init__(all_sprites)
+        self.image = img
+        self.rect = self.image.get_rect().move(
+            50 * pos_x, 50 * pos_y)
+
+    def move(self, m, n):
+        self.rect = self.rect.move(m, n)
+
+    def moveto(self, m, n):
+        self.rect.x, self.rect.x = m, n
+
+    def update(self):
         pass

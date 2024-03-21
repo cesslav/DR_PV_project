@@ -1,4 +1,4 @@
-from classes import DBClass, Empty, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
+from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer, The_Observer
 from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen
 from main import Player
 from datetime import datetime
@@ -19,13 +19,14 @@ main_socket.listen(4)  # включаем прослушку порта, выс�
 
 next_id = [0, 1, 2, 3]
 players_sockets = {}
-FPS = 50
+FPS = 100
 tile_images = {
     'wall': load_image('box.png'),
     'empty': load_image('grass.png'),
     'diamond': load_image('diamond.png', -1),
     'player': load_image('player.png', -1),
-    'enemy': load_image('player.png', -1)
+    'enemy': load_image('player.png', -1),
+    'observer': load_image('observer.png', -1)
 }
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -33,7 +34,7 @@ player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 walls_group = pygame.sprite.Group()
 diamonds_group = pygame.sprite.Group()
-FIELD = [
+FIELD1 = [
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", "g", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
@@ -58,6 +59,18 @@ FIELD = [
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ]
 
+FIELD = [["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", "g", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"]]
+
 
 def close_player_connection(sock):
     players_sockets[sock][0].close()
@@ -70,7 +83,7 @@ def apply_players_moves(sock):
     data = json.loads(data.decode())
     players_sockets[sock][1].move(data['x_move'] * 50,
                                   data['y_move'] * 50)
-    print(players_sockets[sock][1].rect)
+    # print(observer.rect)
     if int(data['bite']) < 0:
         close_player_connection(sock)
     elif int(data['bite']) > 0:
@@ -79,11 +92,18 @@ def apply_players_moves(sock):
 
 def give_answer(sock):
     sprites = []
+    # observ_old_cords_x, observ_old_cords_y = observer.rect.x, observer.rect.y
+    # observer.moveto(players_sockets[sock][1].rect.x, players_sockets[sock][1].rect.y)
+    print(all_sprites.sprites())
+    camera.update(players_sockets[sock][1])
     for i in all_sprites:
-        sprites.append(i.save())
+        if not isinstance(i, The_Observer):
+            sprites.append(i.save())
+
     data = {"field": sprites,
             "player_info": players_sockets[sock][2:]}
     players_sockets[sock][0].send(json.dumps(data).encode())
+    # observer.moveto(observ_old_cords_x, observ_old_cords_y)
 
 
 def generate_level(level):  # наполнение уровня
@@ -147,59 +167,79 @@ pygame.init()
 running, clock = True, pygame.time.Clock()
 generate_level(FIELD)
 screen = pygame.display.set_mode((550, 550))
-camera = Camera(screen)
+camera = Camera()
+observer = The_Observer(all_sprites, tile_images["observer"], 0, 0)
 
 if __name__ == "__main__":
-    while True:
-        for i in list(players_sockets):
-            if not players_sockets[i]:
-                del players_sockets[i]
-        # блок проверки на наличие запросов на подключение
+    while running:
         try:
-            new_socket, address = main_socket.accept()
-            print("подключился", address)
-            new_socket.setblocking(0)
-            # players_sockets.append(new_socket)
-            new_id = next_id.pop(0)
-            players_sockets[new_id] = [new_socket, Player(2, 2), new_id, 10]  # socket, id, Class(x, y), hp
-        except Exception as e:
-            pass
-
-        for sprite in all_sprites:
-            if sprite in enemy_group:
-                sprite.update(walls_group)
-            elif sprite in player_group:
-                sprite.update(0)
-            else:
-                sprite.update()
-
-        # принимаем информацию от клиентов
-        for socket in players_sockets:
+            for i in list(players_sockets):
+                if not players_sockets[i]:
+                    del players_sockets[i]
+            # блок проверки на наличие запросов на подключение
             try:
-                apply_players_moves(socket)
+                new_socket, address = main_socket.accept()
+                print("подключился", address)
+                new_socket.setblocking(0)
+                # players_sockets.append(new_socket)
+                new_id = next_id.pop(0)
+                players_sockets[new_id] = [new_socket, Player(2, 2), new_id, 10]  # socket, id, Class(x, y), hp
+                all_sprites.add(players_sockets[new_id][1])
             except Exception as e:
                 pass
 
-        # отправляем ответ
-        for socket in players_sockets:
-            try:
-                give_answer(socket)
-            except Exception as e:
-                print("can't give answer,", e)
+            for sprite in all_sprites:
+                if sprite in enemy_group:
+                    sprite.update(walls_group)
+                elif sprite in player_group:
+                    sprite.update(0)
+                else:
+                    sprite.update()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        observer.move(50, 0)
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        observer.move(-50, 0)
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
+                        observer.move(0, -50)
+                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        observer.move(0, 50)
+
+            # принимаем информацию от клиентов
+            for socket in players_sockets:
                 try:
-                    close_player_connection(socket)
-                except Exception:
+                    apply_players_moves(socket)
+                except Exception as e:
                     pass
 
-        screen.fill((0, 0, 0))
-        all_sprites.draw(screen)
-        enemy_group.draw(screen)
-        walls_group.draw(screen)
-        player_group.draw(screen)
-        pygame.display.flip()
+            # отправляем ответ
+            for socket in players_sockets:
+                try:
+                    give_answer(socket)
+                except Exception as e:
+                    print("can't give answer,", e)
+                    try:
+                        close_player_connection(socket)
+                    except Exception:
+                        pass
 
-        for sprite in all_sprites:
-            if not isinstance(sprite, PlayerHP):
-                camera.apply(sprite, True)
+            screen.fill((0, 0, 0))
+            all_sprites.draw(screen)
+            enemy_group.draw(screen)
+            walls_group.draw(screen)
+            player_group.draw(screen)
+            pygame.display.flip()
 
-        clock.tick(FPS)
+            for sprite in all_sprites:
+                if not isinstance(sprite, PlayerHP):
+                    camera.apply(sprite, True)
+            camera.update(observer)
+
+            clock.tick(FPS)
+        except Exception as e:
+            print(e)
+            print("ERROR!")
