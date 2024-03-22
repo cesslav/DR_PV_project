@@ -34,7 +34,7 @@ player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 walls_group = pygame.sprite.Group()
 diamonds_group = pygame.sprite.Group()
-FIELD1 = [
+FIELD = [
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", "g", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
@@ -59,20 +59,21 @@ FIELD1 = [
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ]
 
-FIELD = [["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", "g", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"]]
+FIELD1 = [["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", "g", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"]]
 
 
 def close_player_connection(sock):
+    players_sockets[sock][1].kill()
     players_sockets[sock][0].close()
     next_id.append(sock)
     players_sockets[sock] = ''
@@ -81,20 +82,21 @@ def close_player_connection(sock):
 def apply_players_moves(sock):
     data = players_sockets[sock][0].recv(1024)
     data = json.loads(data.decode())
-    players_sockets[sock][1].move(data['x_move'] * 50,
-                                  data['y_move'] * 50)
-    # print(observer.rect)
+    players_sockets[sock][3] = (players_sockets[sock][1].
+                                move(data['x_move'] * 50,
+                                     data['y_move'] * 50,
+                                     players_sockets[sock][3],
+                                     enemy_group,
+                                     walls_group))
     if int(data['bite']) < 0:
         close_player_connection(sock)
     elif int(data['bite']) > 0:
         players_sockets[sock][1].hammer_strike()
+    players_sockets[sock][1].update(0)
 
 
 def give_answer(sock):
     sprites = []
-    # observ_old_cords_x, observ_old_cords_y = observer.rect.x, observer.rect.y
-    # observer.moveto(players_sockets[sock][1].rect.x, players_sockets[sock][1].rect.y)
-    print(all_sprites.sprites())
     camera.update(players_sockets[sock][1])
     for i in all_sprites:
         if not isinstance(i, The_Observer):
@@ -103,7 +105,6 @@ def give_answer(sock):
     data = {"field": sprites,
             "player_info": players_sockets[sock][2:]}
     players_sockets[sock][0].send(json.dumps(data).encode())
-    # observer.moveto(observ_old_cords_x, observ_old_cords_y)
 
 
 def generate_level(level):  # наполнение уровня
@@ -199,15 +200,6 @@ if __name__ == "__main__":
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        observer.move(50, 0)
-                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                        observer.move(-50, 0)
-                    if event.key == pygame.K_UP or event.key == pygame.K_w:
-                        observer.move(0, -50)
-                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        observer.move(0, 50)
 
             # принимаем информацию от клиентов
             for socket in players_sockets:
@@ -237,7 +229,7 @@ if __name__ == "__main__":
             for sprite in all_sprites:
                 if not isinstance(sprite, PlayerHP):
                     camera.apply(sprite, True)
-            camera.update(observer)
+            # camera.update(observer)
 
             clock.tick(FPS)
         except Exception as e:

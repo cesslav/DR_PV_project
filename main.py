@@ -87,6 +87,7 @@ def load_game(data, health=None):
         hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
         player.score = score
         player.extra_move(-150)
+        return player
     except Exception as e:
         print(e)
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
@@ -173,8 +174,8 @@ def generate_level(level):  # наполнение уровня
                     Hammer(all_sprites, tiles_group, string_num, cell_num,
                            load_image('warhammer.png', -1))
     # вернем игрока, а также размер поля в клетках
-    new_player = Player(player_x, player_y)  # создание игрока
-    return new_player
+    # создание игрока
+    return Player(player_x, player_y)
 
 
 class Player(pygame.sprite.Sprite):
@@ -206,10 +207,9 @@ class Player(pygame.sprite.Sprite):
             # Активируем таймер
             self.hammer_timer = pygame.time.get_ticks()
 
-    def move(self, m, n):
-        global player_hp
+    def move(self, m, n, hp, enemy_group=enemy_group, walls_group=walls_group, diamonds_group=diamonds_group):
         global diamonds_left
-        if player_hp > 0 and self.stun <= 0:
+        if hp > 0 and self.stun <= 0:
             # Проверка на наличие стана
             if self.stun <= 0:
                 self.rect = self.rect.move(m, n)
@@ -217,13 +217,13 @@ class Player(pygame.sprite.Sprite):
                 if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
                     if m or n:
                         self.rect = self.rect.move(-m, -n)
-                        player_hp -= 2
+                        hp -= 2
                         self.stun = FPS * 0.75
                         log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
                     else:
                         self.rect = self.rect.move(self.last_moves[-1])
                         self.last_moves.remove(self.last_moves[-1])
-                        player_hp -= 2
+                        hp -= 2
                         self.stun = FPS * 0.75
                         log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
                 if pygame.sprite.spritecollideany(self, walls_group):
@@ -236,7 +236,7 @@ class Player(pygame.sprite.Sprite):
                     self.score += 1
                     diamonds_left -= 1
                     log_file.write(f"[{str(datetime.now())[11:16]}]: player picked diamond\n")
-        print("move", m, n)
+        return hp
 
     def apply_stun(self, duration):
         self.stun = duration * 50  # Преобразуем секунды в кадры
@@ -299,7 +299,10 @@ if __name__ == "__main__":
     time_delta = pygame.time.get_ticks()
     # load_sound("background.mp3")
     log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
-    background_image = pygame.transform.scale(load_image('grass_background.jpg'), (WIDTH, HEIGHT))  #
+    if not online:
+        background_image = pygame.transform.scale(load_image('grass_background.jpg'), (WIDTH, HEIGHT))
+    else:
+        background_image = pygame.transform.scale(load_image('grass_background_online.jpg'), (WIDTH, HEIGHT))
 
     if online:
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # делаем переменную, ссылающуюся на сокет сервера
@@ -349,20 +352,27 @@ if __name__ == "__main__":
                 if event.key == pygame.K_ESCAPE:
                     moves['bite'] = moves['bite'] - 100
         # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
-        screen.blit(background_image, (0, 0))
-        all_sprites.draw(screen)
-        enemy_group.draw(screen)
-        walls_group.draw(screen)
-        player_group.draw(screen)
         if online:
             try:
                 data = my_socket.recv(8192)
                 data = data.decode()
                 if data:
                     data = json.loads(data)
-                    load_game(data["field"], data["player_info"][1])
+                    player = load_game(data["field"], data["player_info"][1])
+                    player_group.add(player)
             except Exception as e:
                 pass
+
+        for sprite in all_sprites:
+            if not isinstance(sprite, PlayerHP):
+                camera.apply(sprite, online)
+        camera.update(player)
+        screen.blit(background_image, (0, 0))
+        all_sprites.draw(screen)
+        enemy_group.draw(screen)
+        walls_group.draw(screen)
+        player_group.draw(screen)
+
         if diamonds_left != 0 and not online:
             screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
                                      True, pygame.Color('red')), (0, 25, 100, 10))
@@ -395,10 +405,6 @@ if __name__ == "__main__":
             moves = {'x_move': 0,
                      'y_move': 0,
                      'bite': 0}
-        camera.update(player)
-        for sprite in all_sprites:
-            if not isinstance(sprite, PlayerHP):
-                camera.apply(sprite, online)
         if diamonds_left == 0:
             player.death()
             if death_switch:
