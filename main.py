@@ -1,4 +1,3 @@
-# импорты необходимых библиотек и функций
 import json
 import os
 from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
@@ -6,16 +5,18 @@ from add_func import terminate, level_choose_screen, load_level, load_image, loa
 from datetime import datetime
 import pygame
 import socket
+# импорты необходимых библиотек и функций
 
 ip = 0
 port = 0
 pygame.init()
 online = False
-FPS = 140
+FPS = 100
 diamonds_left = 0
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
 player_hp = 10
 my_id, all_ids = "0", ["0", "1", "2", "3"]
+last_data = {"player_info": ""}
 screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
 log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
@@ -44,7 +45,6 @@ def load_game(data, health=None):
     try:
         for sprite in all_sprites:
             sprite.kill()
-        # print(data)
         # data = db.get_sprites_info()
         px = 0
         py = 0
@@ -87,11 +87,9 @@ def load_game(data, health=None):
         hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
         player.score = score
         player.extra_move(-150)
-        return player
+        return player, hp
     except Exception as e:
-        print(e)
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
-        terminate()
 
 
 def ttg_level_num(scr, isst):
@@ -190,7 +188,7 @@ class Player(pygame.sprite.Sprite):
         self.hammer_timer = 0
         self.hammer_duration = 1000  # В миллисекундах, здесь 1000 мс = 1 секунда
 
-    def hammer_strike(self):
+    def hammer_strike(self, eg=enemy_group):
         # Проверяем, активен ли таймер молотков
         if self.hammer_timer == 0:
             # Если таймер не активен, создаем молоток
@@ -200,21 +198,21 @@ class Player(pygame.sprite.Sprite):
             hammer = Hammer(all_sprites, tiles_group, hammer_x // tile_width, hammer_y // tile_height,
                             load_image('warhammer.png', -1))
             # Применяем эффект оглушения к змеям вокруг молотка
-            for snake in pygame.sprite.spritecollide(hammer, enemy_group, False):
+            for snake in pygame.sprite.spritecollide(hammer, eg, False):
                 snake.apply_stun(2)  # Применение эффекта оглушения на 2 секунды
             # Применяем эффект оглушения к самому игроку
             self.apply_stun(1)
             # Активируем таймер
             self.hammer_timer = pygame.time.get_ticks()
 
-    def move(self, m, n, hp, enemy_group=enemy_group, walls_group=walls_group, diamonds_group=diamonds_group):
+    def move(self, m, n, hp=player_hp, eg=enemy_group, wg=walls_group, dg=diamonds_group):
         global diamonds_left
         if hp > 0 and self.stun <= 0:
             # Проверка на наличие стана
             if self.stun <= 0:
                 self.rect = self.rect.move(m, n)
                 self.last_moves.append((m, n))
-                if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
+                if pygame.sprite.spritecollideany(self, eg) and self.stun <= 0:
                     if m or n:
                         self.rect = self.rect.move(-m, -n)
                         hp -= 2
@@ -226,13 +224,13 @@ class Player(pygame.sprite.Sprite):
                         hp -= 2
                         self.stun = FPS * 0.75
                         log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
-                if pygame.sprite.spritecollideany(self, walls_group):
+                if pygame.sprite.spritecollideany(self, wg):
                     if m or n:
                         self.rect = self.rect.move(-m, -n)
                     else:
                         self.rect = self.rect.move(self.last_moves[-1])
                         self.last_moves.remove(self.last_moves[-1])
-                if pygame.sprite.spritecollide(self, diamonds_group, True):
+                if pygame.sprite.spritecollide(self, dg, True):
                     self.score += 1
                     diamonds_left -= 1
                     log_file.write(f"[{str(datetime.now())[11:16]}]: player picked diamond\n")
@@ -253,15 +251,14 @@ class Player(pygame.sprite.Sprite):
         return self.score
 
     def update(self, ph=0):
-        global player_hp
         if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
             self.rect = self.rect.move(-self.last_moves[-1][0], -self.last_moves[-1][1])
             self.last_moves.remove(self.last_moves[-1])
-            player_hp -= 2
+            ph -= 2
             self.stun = FPS * 0.75
             log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
-        if player_hp < 0:
-            player_hp = 0
+        if int(ph) < 0:
+            ph = 0
         if not self.last_moves:
             self.last_moves = [(0, 0)]
         if self.stun > 0:
@@ -278,7 +275,8 @@ class Player(pygame.sprite.Sprite):
                 self.hammer_timer = 0
             else:
                 # Если таймер активен и молотки присутствуют, игрок не может двигаться
-                return
+                return ph
+        return ph
 
 
 if __name__ == "__main__":
@@ -297,7 +295,7 @@ if __name__ == "__main__":
     camera, clock = Camera(), pygame.time.Clock()
     # Главный Цикл
     time_delta = pygame.time.get_ticks()
-    # load_sound("background.mp3")
+    load_sound("background.mp3")
     log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
     if not online:
         background_image = pygame.transform.scale(load_image('grass_background.jpg'), (WIDTH, HEIGHT))
@@ -354,15 +352,16 @@ if __name__ == "__main__":
         # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
         if online:
             try:
-                data = my_socket.recv(8192)
+                last_data = data
+                data = my_socket.recv(4096)
                 data = data.decode()
                 if data:
                     data = json.loads(data)
-                    player = load_game(data["field"], data["player_info"][1])
+                    print(data["player_info"][1])
+                    player, hp = load_game(data["field"], data["player_info"][1])
                     player_group.add(player)
-            except Exception as e:
-                pass
-
+            except:
+                data = last_data
         for sprite in all_sprites:
             if not isinstance(sprite, PlayerHP):
                 camera.apply(sprite, online)
@@ -381,7 +380,7 @@ if __name__ == "__main__":
                                      True, pygame.Color('red')), (0, 25, 100, 10))
             screen.blit(font2.render("YOU WIN!", True,
                                      pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-        if (player_hp == 0 and diamonds_left != 0 and not online) or (player_hp == 0 and online):
+        if (player_hp == 0 and diamonds_left != 0 and not online) or (data["player_info"] == "death"):
             screen.blit(font2.render("Game Over", True,
                                      pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
             if death_switch:
@@ -392,15 +391,15 @@ if __name__ == "__main__":
         pygame.display.flip()
         clock.tick(FPS)
         # Обновление всех спрайтов
-        if not online:
-            for sprite in all_sprites:
-                if sprite in enemy_group:
-                    sprite.update(walls_group)
-                elif sprite in player_group:
-                    sprite.update(player_hp)
-                else:
-                    sprite.update()
-        else:
+        # if not online:
+        for sprite in all_sprites:
+            if sprite in enemy_group:
+                sprite.update(walls_group)
+            elif sprite in player_group:
+                sprite.update(player_hp)
+            else:
+                sprite.update()
+        if online:
             my_socket.send(json.dumps(moves).encode())
             moves = {'x_move': 0,
                      'y_move': 0,

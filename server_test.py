@@ -18,6 +18,7 @@ main_socket.setblocking(0)  # отключаем внеплановое ожид
 main_socket.listen(4)  # включаем прослушку порта, выставляем ограничение на кол-во игроков
 
 next_id = [0, 1, 2, 3]
+ids_to_delete = []
 players_sockets = {}
 FPS = 100
 tile_images = {
@@ -34,32 +35,32 @@ player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 walls_group = pygame.sprite.Group()
 diamonds_group = pygame.sprite.Group()
-FIELD = [
+FIELD1 = [
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", "g", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", "#", ".", ".", ".", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "q.", ".", ".g", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".q", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", "#", ".", ".g", ".", ".", ".", ".", "q.", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".#", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", "#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", "q.", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+         ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".#", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "g", "#"],
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ]
 
-FIELD1 = [["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+FIELD = [["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
           ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
           ["#", ".", "g", ".", ".", ".", ".", ".", ".", ".", "#"],
           ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
@@ -76,35 +77,39 @@ def close_player_connection(sock):
     players_sockets[sock][1].kill()
     players_sockets[sock][0].close()
     next_id.append(sock)
-    players_sockets[sock] = ''
+    ids_to_delete.append(sock)
 
 
-def apply_players_moves(sock):
-    data = players_sockets[sock][0].recv(1024)
+def apply_players_moves(sock, eg, wg):
+    players_sockets[sock][3] = players_sockets[sock][1].update(players_sockets[sock][3])
+    data = players_sockets[sock][0].recv(512)
     data = json.loads(data.decode())
     players_sockets[sock][3] = (players_sockets[sock][1].
                                 move(data['x_move'] * 50,
                                      data['y_move'] * 50,
                                      players_sockets[sock][3],
-                                     enemy_group,
-                                     walls_group))
+                                     eg, wg))
     if int(data['bite']) < 0:
         close_player_connection(sock)
     elif int(data['bite']) > 0:
-        players_sockets[sock][1].hammer_strike()
-    players_sockets[sock][1].update(0)
+        players_sockets[sock][1].hammer_strike(eg)
 
 
 def give_answer(sock):
-    sprites = []
-    camera.update(players_sockets[sock][1])
-    for i in all_sprites:
-        if not isinstance(i, The_Observer):
-            sprites.append(i.save())
-
-    data = {"field": sprites,
-            "player_info": players_sockets[sock][2:]}
-    players_sockets[sock][0].send(json.dumps(data).encode())
+    if players_sockets[sock][3]:
+        sprites = []
+        camera.update(players_sockets[sock][1])
+        for i in all_sprites:
+            if not isinstance(i, The_Observer):
+                sprites.append(i.save())
+        data = {"field": sprites,
+                "player_info": players_sockets[sock][2:]}
+        players_sockets[sock][0].send(json.dumps(data).encode())
+    else:
+        data = {"field": "death",
+                "player_info": "death"}
+        players_sockets[sock][0].send(json.dumps(data).encode())
+        close_player_connection(sock)
 
 
 def generate_level(level):  # наполнение уровня
@@ -173,65 +178,57 @@ observer = The_Observer(all_sprites, tile_images["observer"], 0, 0)
 
 if __name__ == "__main__":
     while running:
+        for i in ids_to_delete:
+            del players_sockets[i]
+        # блок проверки на наличие запросов на подключение
         try:
-            for i in list(players_sockets):
-                if not players_sockets[i]:
-                    del players_sockets[i]
-            # блок проверки на наличие запросов на подключение
+            new_socket, address = main_socket.accept()
+            print("подключился", address)
+            new_socket.setblocking(0)
+            # players_sockets.append(new_socket)
+            new_id = next_id.pop(0)
+            players_sockets[new_id] = [new_socket, Player(1, 1), new_id, 10]  # socket, id, Class(x, y), hp
+            all_sprites.add(players_sockets[new_id][1])
+        except Exception as e:
+            pass
+
+        for sprite in all_sprites:
+            if sprite in enemy_group:
+                sprite.update(walls_group)
+            else:
+                sprite.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # принимаем информацию от клиентов
+        for socket in players_sockets:
             try:
-                new_socket, address = main_socket.accept()
-                print("подключился", address)
-                new_socket.setblocking(0)
-                # players_sockets.append(new_socket)
-                new_id = next_id.pop(0)
-                players_sockets[new_id] = [new_socket, Player(2, 2), new_id, 10]  # socket, id, Class(x, y), hp
-                all_sprites.add(players_sockets[new_id][1])
+                apply_players_moves(socket, enemy_group, walls_group)
             except Exception as e:
                 pass
 
-            for sprite in all_sprites:
-                if sprite in enemy_group:
-                    sprite.update(walls_group)
-                elif sprite in player_group:
-                    sprite.update(0)
-                else:
-                    sprite.update()
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-
-            # принимаем информацию от клиентов
-            for socket in players_sockets:
+        # отправляем ответ
+        for socket in players_sockets:
+            try:
+                if len(next_id) < 4:
+                    give_answer(socket)
+            except Exception as e:
+                print("can't give answer,", e)
                 try:
-                    apply_players_moves(socket)
-                except Exception as e:
+                    close_player_connection(socket)
+                except Exception:
                     pass
 
-            # отправляем ответ
-            for socket in players_sockets:
-                try:
-                    give_answer(socket)
-                except Exception as e:
-                    print("can't give answer,", e)
-                    try:
-                        close_player_connection(socket)
-                    except Exception:
-                        pass
+        screen.fill((0, 0, 0))
+        all_sprites.draw(screen)
+        enemy_group.draw(screen)
+        walls_group.draw(screen)
+        player_group.draw(screen)
+        pygame.display.flip()
+        for sprite in all_sprites:
+            camera.apply(sprite, True)
+        # camera.update(observer)
+        clock.tick(FPS)
 
-            screen.fill((0, 0, 0))
-            all_sprites.draw(screen)
-            enemy_group.draw(screen)
-            walls_group.draw(screen)
-            player_group.draw(screen)
-            pygame.display.flip()
-
-            for sprite in all_sprites:
-                if not isinstance(sprite, PlayerHP):
-                    camera.apply(sprite, True)
-            # camera.update(observer)
-
-            clock.tick(FPS)
-        except Exception as e:
-            print(e)
-            print("ERROR!")
