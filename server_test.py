@@ -107,9 +107,6 @@ def give_answer(sock):
                 "ticks": pygame.time.get_ticks()}
         players_sockets[sock][0].send(json.dumps(data).encode())
     else:
-        data = {"field": "death",
-                "player_info": "death"}
-        players_sockets[sock][0].send(json.dumps(data).encode())
         close_player_connection(sock)
 
 

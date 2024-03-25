@@ -15,8 +15,7 @@ FPS = 150
 diamonds_left = 0
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
 player_hp = 10
-my_id, all_ids, data = "0", ["0", "1", "2", "3"], ""
-data = {"player_info": "death"}
+my_id, all_ids = "0", ["0", "1", "2", "3"]
 last_data = {"player_info": ""}
 screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
@@ -320,11 +319,10 @@ if __name__ == "__main__":
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                    if online:
-                        moves = {'x_move': 0,
-                                 'y_move': 0,
-                                 'bite': -100}
-                        my_socket.send(json.dumps(moves).encode())
+                    moves = {'x_move': 0,
+                             'y_move': 0,
+                             'bite': -100}
+                    my_socket.send(json.dumps(moves).encode())
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         moves['x_move'] = moves['x_move'] + 1
@@ -362,14 +360,6 @@ if __name__ == "__main__":
             walls_group.draw(screen)
             player_group.draw(screen)
 
-            if data["player_info"] == "death":
-                screen.blit(font2.render("Game Over", True,
-                                         pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-                if death_switch:
-                    pygame.mixer.music.stop()
-                    s.play()
-                    death_switch = False
-                    log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
             pygame.display.flip()
             clock.tick(FPS)
             # Обновление всех спрайтов
@@ -381,11 +371,13 @@ if __name__ == "__main__":
                     sprite.update(player_hp)
                 else:
                     sprite.update()
-
-            my_socket.send(json.dumps(moves).encode())
-            moves = {'x_move': 0,
-                     'y_move': 0,
-                     'bite': 0}
+            try:
+                my_socket.send(json.dumps(moves).encode())
+                moves = {'x_move': 0,
+                         'y_move': 0,
+                         'bite': 0}
+            except:
+                pass
     else:
         while running:
             for event in pygame.event.get():
@@ -393,13 +385,13 @@ if __name__ == "__main__":
                     running = False
                 if event.type == pygame.KEYDOWN and player_hp > 0 and diamonds_left > 0:
                     if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        player.move(50, 0)
+                        player_hp = player.move(50, 0, player_hp, enemy_group, walls_group, diamonds_group)
                     if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                        player.move(-50, 0)
+                        player_hp = player.move(-50, 0, player_hp, enemy_group, walls_group, diamonds_group)
                     if event.key == pygame.K_UP or event.key == pygame.K_w:
-                        player.move(0, -50)
+                        player_hp = player.move(0, -50, player_hp, enemy_group, walls_group, diamonds_group)
                     if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        player.move(0, 50)
+                        player_hp = player.move(0, 50, player_hp, enemy_group, walls_group, diamonds_group)
                     if event.key == pygame.K_SPACE:
                         player.hammer_strike()
                     if event.key == pygame.K_ESCAPE:
@@ -452,7 +444,7 @@ if __name__ == "__main__":
                     sprite.update(player_hp)
                 else:
                     sprite.update()
-
+            player_hp = player.update(player_hp)
             if diamonds_left == 0:
                 player.death()
                 if death_switch:
