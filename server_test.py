@@ -6,7 +6,7 @@ import pygame
 import json
 import socket
 import time
-IP = "localhost"
+IP = "192.168.0.218"
 port = 9090
 
 # настройка сокета
@@ -20,7 +20,7 @@ main_socket.listen(4)  # включаем прослушку порта, выс�
 next_id = [0, 1, 2, 3]
 ids_to_delete = []
 players_sockets = {}
-FPS = 100
+FPS = 50
 tile_images = {
     'wall': load_image('box.png'),
     'empty': load_image('grass.png'),
@@ -62,14 +62,14 @@ FIELD1 = [
 
 FIELD = [["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
           ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-          ["#", ".", "g", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", "g", ".", ".", "#", "g", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", "#", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", ".", ".", "#", "#", ".", "#"],
+          ["#", ".", ".", "#", ".", "q", ".", ".", ".", ".", "#"],
           ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
-          ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", ".", ".", ".", "#", "q", ".", "#", ".", "#"],
+          ["#", "#", "#", ".", ".", ".", ".", ".", ".", ".", "#"],
+          ["#", ".", "#", ".", ".", ".", ".", ".", ".", ".", "#"],
           ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"]]
 
 
@@ -82,7 +82,7 @@ def close_player_connection(sock):
 
 def apply_players_moves(sock, eg, wg):
     players_sockets[sock][3] = players_sockets[sock][1].update(players_sockets[sock][3])
-    data = players_sockets[sock][0].recv(512)
+    data = players_sockets[sock][0].recv(256)
     data = json.loads(data.decode())
     players_sockets[sock][3] = (players_sockets[sock][1].
                                 move(data['x_move'] * 50,
@@ -103,7 +103,8 @@ def give_answer(sock):
             if not isinstance(i, The_Observer):
                 sprites.append(i.save())
         data = {"field": sprites,
-                "player_info": players_sockets[sock][2:]}
+                "player_info": players_sockets[sock][2:],
+                "ticks": pygame.time.get_ticks()}
         players_sockets[sock][0].send(json.dumps(data).encode())
     else:
         data = {"field": "death",
@@ -178,57 +179,58 @@ observer = The_Observer(all_sprites, tile_images["observer"], 0, 0)
 
 if __name__ == "__main__":
     while running:
-        for i in ids_to_delete:
-            del players_sockets[i]
-        # блок проверки на наличие запросов на подключение
-        try:
-            new_socket, address = main_socket.accept()
-            print("подключился", address)
-            new_socket.setblocking(0)
-            # players_sockets.append(new_socket)
-            new_id = next_id.pop(0)
-            players_sockets[new_id] = [new_socket, Player(1, 1), new_id, 10]  # socket, id, Class(x, y), hp
-            all_sprites.add(players_sockets[new_id][1])
-        except Exception as e:
-            pass
-
-        for sprite in all_sprites:
-            if sprite in enemy_group:
-                sprite.update(walls_group)
-            else:
-                sprite.update()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        # принимаем информацию от клиентов
-        for socket in players_sockets:
-            try:
-                apply_players_moves(socket, enemy_group, walls_group)
-            except Exception as e:
-                pass
-
-        # отправляем ответ
-        for socket in players_sockets:
-            try:
-                if len(next_id) < 4:
-                    give_answer(socket)
-            except Exception as e:
-                print("can't give answer,", e)
+        # try:
+            for i in ids_to_delete:
                 try:
-                    close_player_connection(socket)
+                    del players_sockets[i]
                 except Exception:
                     pass
 
-        screen.fill((0, 0, 0))
-        all_sprites.draw(screen)
-        enemy_group.draw(screen)
-        walls_group.draw(screen)
-        player_group.draw(screen)
-        pygame.display.flip()
-        for sprite in all_sprites:
-            camera.apply(sprite, True)
-        # camera.update(observer)
-        clock.tick(FPS)
+            # блок проверки на наличие запросов на подключение
+            try:
+                new_socket, address = main_socket.accept()
+                new_socket.setblocking(0)
+                # players_sockets.append(new_socket)
+                new_id = next_id.pop(0)
+                players_sockets[new_id] = [new_socket, Player(1, 1), new_id, 10]  # socket, id, Class(x, y), hp
+                all_sprites.add(players_sockets[new_id][1])
+            except Exception as e:
+                pass
 
+            for sprite in all_sprites:
+                if sprite in enemy_group:
+                    sprite.update(walls_group, FPS)
+                else:
+                    sprite.update()
+
+            # принимаем информацию от клиентов
+            for socket in players_sockets:
+                try:
+                    apply_players_moves(socket, enemy_group, walls_group)
+                except Exception as e:
+                    pass
+
+            # отправляем ответ
+            for socket in players_sockets:
+                try:
+                    if len(next_id) < 4:
+                        give_answer(socket)
+                except Exception as e:
+                    print("can't give answer,", e)
+                    try:
+                        close_player_connection(socket)
+                    except Exception:
+                        pass
+
+            screen.fill((0, 0, 0))
+            all_sprites.draw(screen)
+            enemy_group.draw(screen)
+            walls_group.draw(screen)
+            player_group.draw(screen)
+            pygame.display.flip()
+            for sprite in all_sprites:
+                camera.apply(sprite, True)
+            # camera.update(observer)
+            clock.tick(FPS)
+        # except Exception as e:
+        #     print("ERROR!", e)

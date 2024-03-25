@@ -11,11 +11,12 @@ ip = 0
 port = 0
 pygame.init()
 online = False
-FPS = 100
+FPS = 150
 diamonds_left = 0
 SCREEN_SIZE = WIDTH, HEIGHT = 550, 550
 player_hp = 10
-my_id, all_ids = "0", ["0", "1", "2", "3"]
+my_id, all_ids, data = "0", ["0", "1", "2", "3"], ""
+data = {"player_info": "death"}
 last_data = {"player_info": ""}
 screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
@@ -102,7 +103,7 @@ def ttg_level_num(scr, isst):
             pl = generate_level(load_level(txt))
         else:
             ip, port = txt.split(":")
-            if ip:
+            if ip == ".":
                 port = int(port)
                 ip = "localhost"
             pl = Player(0, 0)
@@ -257,7 +258,10 @@ class Player(pygame.sprite.Sprite):
             ph -= 2
             self.stun = FPS * 0.75
             log_file.write(f"[{str(datetime.now())[11:16]}]: player has damaged\n")
-        if int(ph) < 0:
+        try:
+            if int(ph) < 0:
+                ph = 0
+        except Exception:
             ph = 0
         if not self.last_moves:
             self.last_moves = [(0, 0)]
@@ -295,7 +299,7 @@ if __name__ == "__main__":
     camera, clock = Camera(), pygame.time.Clock()
     # Главный Цикл
     time_delta = pygame.time.get_ticks()
-    load_sound("background.mp3")
+    # load_sound("background.mp3")
     log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
     if not online:
         background_image = pygame.transform.scale(load_image('grass_background.jpg'), (WIDTH, HEIGHT))
@@ -306,112 +310,159 @@ if __name__ == "__main__":
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # делаем переменную, ссылающуюся на сокет сервера
         my_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)  # отключаем создание крупных пакетов
         # отключение алгоритма Нейгла
-        my_socket.connect((ip, port))
+        # ip = "213.21.51.48"
+        my_socket.connect((ip, int(port)))
         my_id = first_connection(my_socket)
         all_ids.remove(my_id)
         all_ids = set(all_ids)
 
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN and player_hp > 0 and diamonds_left > 0 and not online:
-                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                    player.move(50, 0)
-                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                    player.move(-50, 0)
-                if event.key == pygame.K_UP or event.key == pygame.K_w:
-                    player.move(0, -50)
-                if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                    player.move(0, 50)
-                if event.key == pygame.K_SPACE:
-                    player.hammer_strike()
-                if event.key == pygame.K_ESCAPE:
-                    start_screen(screen, WIDTH, HEIGHT)
-                if event.key == pygame.K_q:
-                    db.clear_db()
-                    for sprite in all_sprites:
-                        if not isinstance(sprite, Camera) and not isinstance(sprite, PlayerHP):
-                            db.save_game_sprite(sprite.save())
-                    db.save_game_vars(player_hp, player.score)
-                if event.key == pygame.K_e:
-                    load_game(db.get_sprites_info())
-            elif event.type == pygame.KEYUP and online:
-                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                    moves['x_move'] = moves['x_move'] + 1
-                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                    moves['x_move'] = moves['x_move'] - 1
-                if event.key == pygame.K_UP or event.key == pygame.K_w:
-                    moves['y_move'] = moves['y_move'] - 1
-                if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                    moves['y_move'] = moves['y_move'] + 1
-                if event.key == pygame.K_SPACE:
-                    moves['bite'] = moves['bite'] + 1
-                if event.key == pygame.K_ESCAPE:
-                    moves['bite'] = moves['bite'] - 100
-        # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
-        if online:
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                    if online:
+                        moves = {'x_move': 0,
+                                 'y_move': 0,
+                                 'bite': -100}
+                        my_socket.send(json.dumps(moves).encode())
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        moves['x_move'] = moves['x_move'] + 1
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        moves['x_move'] = moves['x_move'] - 1
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
+                        moves['y_move'] = moves['y_move'] - 1
+                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        moves['y_move'] = moves['y_move'] + 1
+                    if event.key == pygame.K_SPACE:
+                        moves['bite'] = moves['bite'] + 1
+                    if event.key == pygame.K_ESCAPE:
+                        moves['bite'] = moves['bite'] - 100
+            # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
+
             try:
-                last_data = data
-                data = my_socket.recv(4096)
+                data = my_socket.recv(6144)
                 data = data.decode()
                 if data:
                     data = json.loads(data)
-                    print(data["player_info"][1])
                     player, hp = load_game(data["field"], data["player_info"][1])
                     player_group.add(player)
-            except:
+                    data = last_data
+            except Exception as e:
                 data = last_data
-        for sprite in all_sprites:
-            if not isinstance(sprite, PlayerHP):
-                camera.apply(sprite, online)
-        camera.update(player)
-        screen.blit(background_image, (0, 0))
-        all_sprites.draw(screen)
-        enemy_group.draw(screen)
-        walls_group.draw(screen)
-        player_group.draw(screen)
 
-        if diamonds_left != 0 and not online:
-            screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
-                                     True, pygame.Color('red')), (0, 25, 100, 10))
-        elif diamonds_left == 0 and not online:
-            screen.blit(font1.render(f"TIME {time_delta}",
-                                     True, pygame.Color('red')), (0, 25, 100, 10))
-            screen.blit(font2.render("YOU WIN!", True,
-                                     pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-        if (player_hp == 0 and diamonds_left != 0 and not online) or (data["player_info"] == "death"):
-            screen.blit(font2.render("Game Over", True,
-                                     pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-            if death_switch:
-                pygame.mixer.music.stop()
-                s.play()
-                death_switch = False
-                log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
-        pygame.display.flip()
-        clock.tick(FPS)
-        # Обновление всех спрайтов
-        # if not online:
-        for sprite in all_sprites:
-            if sprite in enemy_group:
-                sprite.update(walls_group)
-            elif sprite in player_group:
-                sprite.update(player_hp)
-            else:
-                sprite.update()
-        if online:
+            for sprite in all_sprites:
+                if not isinstance(sprite, PlayerHP):
+                    camera.apply(sprite, online)
+
+            camera.update(player)
+            screen.blit(background_image, (0, 0))
+            all_sprites.draw(screen)
+            enemy_group.draw(screen)
+            walls_group.draw(screen)
+            player_group.draw(screen)
+
+            if data["player_info"] == "death":
+                screen.blit(font2.render("Game Over", True,
+                                         pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
+                if death_switch:
+                    pygame.mixer.music.stop()
+                    s.play()
+                    death_switch = False
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
+            pygame.display.flip()
+            clock.tick(FPS)
+            # Обновление всех спрайтов
+            # if not online:
+            for sprite in all_sprites:
+                if sprite in enemy_group:
+                    sprite.update(walls_group)
+                elif sprite in player_group:
+                    sprite.update(player_hp)
+                else:
+                    sprite.update()
+
             my_socket.send(json.dumps(moves).encode())
             moves = {'x_move': 0,
                      'y_move': 0,
                      'bite': 0}
-        if diamonds_left == 0:
-            player.death()
-            if death_switch:
-                db.add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
-                log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is win\n")
-                log_file.write(f"[{str(datetime.now())[11:16]}]: game end "
-                               f"with time {(pygame.time.get_ticks() - time_delta) / 1000}\n")
-                death_switch = False
-                time_delta = (pygame.time.get_ticks() - time_delta) / 1000
-    # корректный выход из программы при завершении цикла
-    pygame.quit()
+    else:
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN and player_hp > 0 and diamonds_left > 0:
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        player.move(50, 0)
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        player.move(-50, 0)
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
+                        player.move(0, -50)
+                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        player.move(0, 50)
+                    if event.key == pygame.K_SPACE:
+                        player.hammer_strike()
+                    if event.key == pygame.K_ESCAPE:
+                        start_screen(screen, WIDTH, HEIGHT)
+                    if event.key == pygame.K_q:
+                        db.clear_db()
+                        for sprite in all_sprites:
+                            if not isinstance(sprite, Camera) and not isinstance(sprite, PlayerHP):
+                                db.save_game_sprite(sprite.save())
+                        db.save_game_vars(player_hp, player.score)
+                    if event.key == pygame.K_e:
+                        load_game(db.get_sprites_info())
+
+            for sprite in all_sprites:
+                if not isinstance(sprite, PlayerHP):
+                    camera.apply(sprite, online)
+
+            camera.update(player)
+            screen.blit(background_image, (0, 0))
+            all_sprites.draw(screen)
+            enemy_group.draw(screen)
+            walls_group.draw(screen)
+            player_group.draw(screen)
+
+            if diamonds_left != 0:
+                screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
+                                         True, pygame.Color('red')), (0, 25, 100, 10))
+            elif diamonds_left == 0:
+                screen.blit(font1.render(f"TIME {time_delta}",
+                                         True, pygame.Color('red')), (0, 25, 100, 10))
+                screen.blit(font2.render("YOU WIN!", True,
+                                         pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
+            if player_hp == 0 and diamonds_left != 0:
+                screen.blit(font2.render("Game Over", True,
+                                         pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
+                if death_switch:
+                    pygame.mixer.music.stop()
+                    s.play()
+                    death_switch = False
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
+
+            pygame.display.flip()
+            clock.tick(FPS)
+            # Обновление всех спрайтов
+
+            for sprite in all_sprites:
+                if sprite in enemy_group:
+                    sprite.update(walls_group)
+                elif sprite in player_group:
+                    sprite.update(player_hp)
+                else:
+                    sprite.update()
+
+            if diamonds_left == 0:
+                player.death()
+                if death_switch:
+                    db.add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is win\n")
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: game end "
+                                   f"with time {(pygame.time.get_ticks() - time_delta) / 1000}\n")
+                    death_switch = False
+                    time_delta = (pygame.time.get_ticks() - time_delta) / 1000
+        # корректный выход из программы при завершении цикла
+        pygame.quit()
+
+# -m nuitka --windows-disable-console --follow-imports main.py

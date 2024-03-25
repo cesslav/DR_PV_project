@@ -120,17 +120,6 @@ class Camera:
         return self.__class__.__name__, None, None, None, None, None, 1
 
 
-# class Empty(pygame.sprite.Sprite):
-#     def __init__(self, all_sprites, tiles_group, pos_x, pos_y, img, tile_width=50):
-#         super().__init__(tiles_group, all_sprites)
-#         self.image = img
-#         self.rect = self.image.get_rect().move(
-#             tile_width * pos_x, tile_width * pos_y)
-#
-#     def save(self):
-#         return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
-
-
 class Diamond(pygame.sprite.Sprite):
     def __init__(self, all_sprites, diamonds_group, pos_x, pos_y, img, tile_width=50):
         super().__init__(all_sprites, diamonds_group)
@@ -161,8 +150,11 @@ class PlayerHP(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self, player_hp):
-        self.cur_frame = 10 - player_hp
-        self.image = self.frames[self.cur_frame]
+        try:
+            self.cur_frame = 10 - player_hp
+            self.image = self.frames[self.cur_frame]
+        except:
+            self.image = self.frames[0]
 
     def save(self):
         return self.__class__.__name__, None, None, None, None, None, 1
@@ -214,9 +206,10 @@ class GreenSnake(pygame.sprite.Sprite):
                 self.direction_x = -self.direction_x
                 self.direction_y = -self.direction_y
 
-    def update(self, walls_group):
+    def update(self, walls_group, fps=150):
         self.update_load += 1
-        if self.update_load % 140 == 0:
+        if self.update_load / (fps / 4) > 0:
+            self.update_load -= (fps / 4)
             self.move(walls_group)
             if self.direction_x == 1:
                 self.cur_frame = (self.cur_frame - 1) % 8  # движение вправо (колонки с 9 по 2)
