@@ -1,12 +1,13 @@
 
-”python:S1192’"NDefine a constant instead of duplicating this literal 'warhammer.png' 3 times.(«×—ç8±òè¯ç1J$66236aa4-cb87-4ea7-b121-ec79d8b44169
-python:S1192G"KDefine a constant instead of duplicating this literal "snakes.png" 5 times.(™º¨¾8²òè¯ç1J$0e3effde-181e-4370-aa5e-67335057f078
-™python:S3776+"TRefactor this function to reduce its Cognitive Complexity from 22 to the 15 allowed.(ó‘§Ÿ8²òè¯ç1J$30300b2f-aa61-4709-a7a1-0fc5b2ff285c
-cpython:S1250"Remove this commented out code.(ÊæÃ…8²òè¯ç1J$29b85831-fa4e-40a4-ab46-01b7a123aaeb
-mpython:S1087")Either remove or fill this block of code.(ã‘Û¾8²òè¯ç1J$20ee0ee1-45ac-49b9-b93c-e883050626a8
-hpython:S125b"Remove this commented out code.(›É–Øøÿÿÿÿ8²òè¯ç1J$374890f7-41b0-4ebd-b550-c328b057f1ea
-™python:S3776u"TRefactor this function to reduce its Cognitive Complexity from 72 to the 15 allowed.(×ø’ï8³òè¯ç1J$a9db76bc-53de-4b3b-8b1a-19b087a7589a
-mpython:S108~")Either remove or fill this block of code.(ã‘Û¾8³òè¯ç1J$e76c5562-398a-4d95-b0d6-caf4db1cc08c
-špython:S3776Ğ"TRefactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed.(‡à“‰8³òè¯ç1J$257189d2-730b-4319-b0b2-a2c04de6c60d
-Ÿpython:S3776ı"TRefactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed.(û³å—ûÿÿÿÿ8³òè¯ç1J$6a1fcc24-52ab-4478-8650-b4af8ca88cc6
-‚python:S5754û"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8³òè¯ç1J$f13a40f7-2570-47d7-bb85-3ced7b8d9e64
+”python:S1192–"NDefine a constant instead of duplicating this literal 'warhammer.png' 3 times.(«×—ç8êÌ†´ç1J$0a04b3f6-9b91-4554-a08c-3c96860ea171
+python:S1192K"KDefine a constant instead of duplicating this literal "snakes.png" 5 times.(™º¨¾8ßõò°ç1J$05dad62a-79ad-4f33-8391-28550a45921b
+™python:S3776+"TRefactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed.(ó‘§Ÿ8ßõò°ç1J$9f9872ba-2ad0-4cc8-b149-c3cd703d5268
+cpython:S1250"Remove this commented out code.(ÊæÃ…8ßõò°ç1J$b76e2c0e-2faf-4df0-9d99-6e8691ee9c26
+mpython:S1087")Either remove or fill this block of code.(ã‘Û¾8àõò°ç1J$33049b5e-daf5-4610-a86a-b5138ffe3fed
+upython:S5806>"+Rename this variable; it shadows a builtin.(†Çû£øÿÿÿÿ8àõò°ç1J$1270fa7b-3026-4e94-881d-a02df962758e
+hpython:S125f"Remove this commented out code.(›É–Øøÿÿÿÿ8ğÌ†´ç1J$63d908c0-c58c-40e2-8c99-f295dbb9ac5e
+™python:S3776y"TRefactor this function to reduce its Cognitive Complexity from 72 to the 15 allowed.(×ø’ï8ñÌ†´ç1J$8eecabd0-1f63-48be-b221-2b208dec9430
+npython:S108‚")Either remove or fill this block of code.(ã‘Û¾8òÌ†´ç1J$da8abfb9-fee7-41c1-805c-29be7834b59d
+špython:S3776Õ"TRefactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed.(‡à“‰8óÌ†´ç1J$04a08d75-0e39-4ba0-bfcc-e4803de8a467
+Ÿpython:S3776‚"TRefactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed.(û³å—ûÿÿÿÿ8ôÌ†´ç1J$67ac7aa6-233e-4ae7-87dc-24aeabf8f223
+‚python:S5754€"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8õÌ†´ç1J$58ebbfd8-0829-4cba-9c01-51c6fb89fed7

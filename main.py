@@ -59,9 +59,13 @@ def load_game(data, health=None):
                 Wall(all_sprites, tiles_group, walls_group, information[1] / 50,
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
-                px, py, stun = information[1], information[2], information[5]
+                px, py, id, stun = information[1], information[2], information[3], information[5]
                 if stun > FPS * 2:
                     stun = FPS * 2
+                if id == my_id:
+                    player = Player(px, py, id, stun)
+                else:
+                    Player(px, py, id, stun)
             elif information[0] == "Diamond":
                 Diamond(all_sprites, diamonds_group, information[1] / 50,
                         information[2] / 50, tile_images['diamond'])
@@ -70,7 +74,6 @@ def load_game(data, health=None):
                 GreenSnake(all_sprites, enemy_group, information[1] / 50, information[2] / 50,
                            load_image("snakes.png"), dirx=information[3], diry=information[4],
                            stun=information[5])
-        player = Player(px, py, stun)
         if not online:
             data = db.get_vars_info()
             score = 0
@@ -87,6 +90,7 @@ def load_game(data, health=None):
         hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
         player.score = score
         player.extra_move(-150)
+        print(all_sprites.sprites())
         return player, hp
     except Exception as e:
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
@@ -177,7 +181,7 @@ def generate_level(level):  # наполнение уровня
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, stun=0):
+    def __init__(self, pos_x, pos_y, id=0, stun=0):
         super().__init__(player_group, all_sprites)
         self.image = tile_images["player"]
         self.rect = self.image.get_rect().move(
@@ -187,6 +191,7 @@ class Player(pygame.sprite.Sprite):
         self.stun = stun
         self.hammer_timer = 0
         self.hammer_duration = 1000  # В миллисекундах, здесь 1000 мс = 1 секунда
+        self.id = id
 
     def hammer_strike(self, eg=enemy_group):
         # Проверяем, активен ли таймер молотков
@@ -240,7 +245,7 @@ class Player(pygame.sprite.Sprite):
         self.stun = duration * 50  # Преобразуем секунды в кадры
 
     def save(self):
-        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, self.stun, 1
+        return self.__class__.__name__, self.rect.x, self.rect.y, self.id, None, self.stun, 1
 
     def extra_move(self, m):
         self.rect = self.rect.move(m, m)

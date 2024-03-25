@@ -64,7 +64,7 @@ FIELD = [["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
           ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
           ["#", ".", "g", ".", ".", "#", "g", ".", ".", ".", "#"],
           ["#", ".", ".", ".", "#", ".", ".", ".", ".", ".", "#"],
-          ["#", ".", ".", ".", ".", ".", ".", "#", "#", ".", "#"],
+          [".", ".", ".", ".", ".", ".", ".", "#", "#", ".", "#"],
           ["#", ".", ".", "#", ".", "q", ".", ".", ".", ".", "#"],
           ["#", ".", ".", ".", ".", ".", ".", ".", ".", ".", "#"],
           ["#", ".", ".", ".", ".", "#", "q", ".", "#", ".", "#"],
@@ -170,9 +170,8 @@ def generate_level(level):  # наполнение уровня
 pygame.init()
 running, clock = True, pygame.time.Clock()
 generate_level(FIELD)
-screen = pygame.display.set_mode((550, 550))
+screen = pygame.display.set_mode((1000, 1000))
 camera = Camera()
-observer = The_Observer(all_sprites, tile_images["observer"], 0, 0)
 
 if __name__ == "__main__":
     while running:
@@ -189,7 +188,8 @@ if __name__ == "__main__":
                 new_socket.setblocking(0)
                 # players_sockets.append(new_socket)
                 new_id = next_id.pop(0)
-                players_sockets[new_id] = [new_socket, Player(1, 1), new_id, 10]  # socket, id, Class(x, y), hp
+                new_player = Player(1, 1)
+                players_sockets[new_id] = [new_socket, new_player, new_id, 10]  # socket, id, Class(x, y), hp
                 all_sprites.add(players_sockets[new_id][1])
             except Exception as e:
                 pass
