@@ -45,17 +45,9 @@ def load_game(data, health=None):
     try:
         for sprite in all_sprites:
             sprite.kill()
-        # data = db.get_sprites_info()
-        px = 0
-        py = 0
-        stun = 0
         diamonds_left = 0
         for information in data:
-            if information[0] == "Empty":
-                pass
-                # Empty(all_sprites, tiles_group, information[1] / 50,
-                #       information[2] / 50, tile_images['empty'])
-            elif information[0] == "Wall":
+            if information[0] == "Wall":
                 Wall(all_sprites, tiles_group, walls_group, information[1] / 50,
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
@@ -90,7 +82,6 @@ def load_game(data, health=None):
         hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
         player.score = score
         player.extra_move(-150)
-        print(all_sprites.sprites())
         return player, hp
     except Exception as e:
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
@@ -349,6 +340,7 @@ if __name__ == "__main__":
                 if data:
                     data = json.loads(data)
                     player, hp = load_game(data["field"], data["player_info"][1])
+                    print(my_id, player.id)
                     player_group.add(player)
                     data = last_data
             except Exception as e:
