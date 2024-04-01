@@ -6,7 +6,7 @@ import pygame
 import json
 import socket
 import time
-IP = "192.168.0.218"
+IP = "localhost"
 port = 9090
 
 # настройка сокета
@@ -188,7 +188,7 @@ if __name__ == "__main__":
                 new_socket.setblocking(0)
                 # players_sockets.append(new_socket)
                 new_id = next_id.pop(0)
-                new_player = Player(1, 1)
+                new_player = Player(1, 1, id=new_id)
                 players_sockets[new_id] = [new_socket, new_player, new_id, 10]  # socket, id, Class(x, y), hp
                 all_sprites.add(players_sockets[new_id][1])
             except Exception as e:
@@ -202,7 +202,9 @@ if __name__ == "__main__":
 
             # принимаем информацию от клиентов
             for socket in players_sockets:
+
                 try:
+                    print(socket)
                     apply_players_moves(socket, enemy_group, walls_group)
                 except Exception as e:
                     pass
