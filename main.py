@@ -45,18 +45,30 @@ def load_game(data, health=None):
     try:
         for sprite in all_sprites:
             sprite.kill()
+        # data = db.get_sprites_info()
+        px = 0
+        py = 0
+        stun = 0
+        player = None
         diamonds_left = 0
         for information in data:
-            if information[0] == "Wall":
+            if information[0] == "Empty":
+                pass
+                # Empty(all_sprites, tiles_group, information[1] / 50,
+                #       information[2] / 50, tile_images['empty'])
+            elif information[0] == "Wall":
                 Wall(all_sprites, tiles_group, walls_group, information[1] / 50,
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
                 px, py, id, stun = information[1], information[2], information[3], information[5]
+                print(type(id), type(my_id))
                 if stun > FPS * 2:
                     stun = FPS * 2
                 if id == my_id:
+                    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     player = Player(px, py, id, stun)
                 else:
+                    print("¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡")
                     Player(px, py, id, stun)
             elif information[0] == "Diamond":
                 Diamond(all_sprites, diamonds_group, information[1] / 50,
@@ -80,10 +92,15 @@ def load_game(data, health=None):
         log_file.write(f"[{str(datetime.now())[11:16]}]: game loaded from save file\n")
         camera = Camera()
         hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
-        player.score = score
-        player.extra_move(-150)
-        return player, hp
+        if not online:
+            player.score = score
+            player.extra_move(-150)
+        if player is not None:
+            return player, hp
+        else:
+            return Player(250, 250, my_id), 10
     except Exception as e:
+        print(e)
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
 
 
@@ -309,6 +326,7 @@ if __name__ == "__main__":
         my_socket.connect((ip, int(port)))
         my_id = first_connection(my_socket)
         all_ids.remove(my_id)
+        my_id = int(my_id)
         all_ids = set(all_ids)
 
         while running:

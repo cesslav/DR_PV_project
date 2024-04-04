@@ -112,6 +112,7 @@ class Camera:
 
     # позиционировать камеру на объекте target
     def update(self, target):
+        print(target.__class__.__name__)
         self.dx = -(target.rect.x + target.rect.w // 2 - self.width // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - self.height // 2)
 
