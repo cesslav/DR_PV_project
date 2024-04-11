@@ -46,9 +46,7 @@ def load_game(data, health=None):
         for sprite in all_sprites:
             sprite.kill()
         # data = db.get_sprites_info()
-        px = 0
-        py = 0
-        stun = 0
+        pg = []
         player = None
         diamonds_left = 0
         for information in data:
@@ -61,15 +59,15 @@ def load_game(data, health=None):
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
                 px, py, id, stun = information[1], information[2], information[3], information[5]
-                print(type(id), type(my_id))
+                print(my_id, id)
                 if stun > FPS * 2:
                     stun = FPS * 2
                 if id == my_id:
-                    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     player = Player(px, py, id, stun)
                 else:
-                    print("¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡")
-                    Player(px, py, id, stun)
+                    # print("¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡")
+                    pg.append(Player(px, py, id, stun))
             elif information[0] == "Diamond":
                 Diamond(all_sprites, diamonds_group, information[1] / 50,
                         information[2] / 50, tile_images['diamond'])
@@ -96,9 +94,9 @@ def load_game(data, health=None):
             player.score = score
             player.extra_move(-150)
         if player is not None:
-            return player, hp
+            return player, hp, pg
         else:
-            return Player(250, 250, my_id), 10
+            return Player(250, 250, my_id), 10, pg
     except Exception as e:
         print(e)
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
@@ -327,9 +325,8 @@ if __name__ == "__main__":
         # ip = "213.21.51.48"
         my_socket.connect((ip, int(port)))
         my_id = first_connection(my_socket)
-        all_ids.remove(my_id)
+
         my_id = int(my_id)
-        all_ids = set(all_ids)
 
         while running:
             for event in pygame.event.get():
@@ -359,9 +356,10 @@ if __name__ == "__main__":
                 data = data.decode()
                 if data:
                     data = json.loads(data)
-                    player, hp = load_game(data["field"], data["player_info"][1])
-                    print(my_id, player.id)
+                    player, hp, pg = load_game(data["field"], data["player_info"][1])
                     player_group.add(player)
+                    for i in pg:
+                        player_group.add(i)
                     data = last_data
             except Exception as e:
                 data = last_data
@@ -372,7 +370,8 @@ if __name__ == "__main__":
 
             camera.update(player)
             screen.blit(background_image, (0, 0))
-            all_sprites.draw(screen)
+
+            # all_sprites.draw(screen)
             enemy_group.draw(screen)
             walls_group.draw(screen)
             player_group.draw(screen)
