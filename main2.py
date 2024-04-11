@@ -273,6 +273,8 @@ class Player(pygame.sprite.Sprite):
         try:
             if int(ph) < 0:
                 ph = 0
+            if int(ph) > 10:
+                ph = 10
         except Exception:
             ph = 0
         if not self.last_moves:
@@ -358,7 +360,7 @@ if __name__ == "__main__":
                 if data:
                     data = json.loads(data)
                     player, hp = load_game(data["field"], data["player_info"][1])
-                    # print(my_id, player.id)
+                    print(my_id, player.id)
                     player_group.add(player)
                     data = last_data
             except Exception as e:

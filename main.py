@@ -273,6 +273,8 @@ class Player(pygame.sprite.Sprite):
         try:
             if int(ph) < 0:
                 ph = 0
+            if int(ph) > 10:
+                ph = 10
         except Exception:
             ph = 0
         if not self.last_moves:
