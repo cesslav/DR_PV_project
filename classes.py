@@ -75,8 +75,8 @@ class DBClass:
 
 
 class Wall(pygame.sprite.Sprite):
-    def __init__(self, all_sprites, tiles_group, walls_group, pos_x, pos_y, img, tile_width=50):
-        super().__init__(tiles_group, all_sprites)
+    def __init__(self, all_sprites, walls_group, pos_x, pos_y, img, tile_width=50):
+        super().__init__(all_sprites)
         tile_height = tile_width
         self.image = img
         self.rect = self.image.get_rect().move(
@@ -224,8 +224,8 @@ class GreenSnake(pygame.sprite.Sprite):
 
 
 class Hammer(pygame.sprite.Sprite):
-    def __init__(self, all_sprites, tiles_group, x, y, image, tile_width=50):
-        super().__init__(all_sprites, tiles_group)
+    def __init__(self, all_sprites, x, y, image, tile_width=50):
+        super().__init__(all_sprites)
         self.image = image
         self.rect = self.image.get_rect().move(
             tile_width * x, tile_width * y)

@@ -30,7 +30,6 @@ tile_images = {
     'observer': load_image('observer.png', -1)
 }
 all_sprites = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 walls_group = pygame.sprite.Group()
@@ -98,7 +97,6 @@ def apply_players_moves(sock, eg, wg):
 def give_answer(sock):
     if players_sockets[sock][3]:
         sprites = []
-        camera.update(players_sockets[sock][1])
         for i in all_sprites:
             if not isinstance(i, The_Observer):
                 sprites.append(i.save())
@@ -119,48 +117,48 @@ def generate_level(level):  # наполнение уровня
         for y in range(len(level)):  # создание спрайтов уровня
             for x in range(len(level[y])):
                 if '.' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     pass
                 if '#' in level[y][x]:
-                    Wall(all_sprites, tiles_group, walls_group, x, y, tile_images['wall'])
+                    Wall(all_sprites, walls_group, x, y, tile_images['wall'])
                 if '@' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     player_x, player_y = x, y
                 if 'd' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, x, y, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
-                    Hammer(all_sprites, tiles_group, x, y,
+                    # Empty(all_sprites, x, y, tile_images['empty'])
+                    Hammer(all_sprites, x, y,
                            load_image('warhammer.png', -1))
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
                 if '.' in level[string_num][cell_num]:
                     pass
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                 if '#' in level[string_num][cell_num]:
-                    Wall(all_sprites, tiles_group, walls_group, string_num, cell_num, tile_images['wall'])
+                    Wall(all_sprites, walls_group, string_num, cell_num, tile_images['wall'])
                 if 'd' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, string_num, cell_num, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
-                    Hammer(all_sprites, tiles_group, string_num, cell_num,
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
+                    Hammer(all_sprites, string_num, cell_num,
                            load_image('warhammer.png', -1))
     # вернем игрока, а также размер поля в клетках
     new_player = Player(player_x, player_y)  # создание игрока
@@ -227,8 +225,8 @@ if __name__ == "__main__":
             walls_group.draw(screen)
             player_group.draw(screen)
             pygame.display.flip()
-            for sprite in all_sprites:
-                camera.apply(sprite, True)
+            #for sprite in all_sprites:
+            #    camera.apply(sprite, True)
             # camera.update(observer)
             clock.tick(FPS)
         # except Exception as e:

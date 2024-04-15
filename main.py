@@ -33,7 +33,6 @@ moves = {'x_move': 0,
          'bite': 0}
 # создание групп спрайтов для более удобного обращения со спрайтами
 all_sprites = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 walls_group = pygame.sprite.Group()
@@ -52,10 +51,10 @@ def load_game(data, health=None):
         for information in data:
             if information[0] == "Empty":
                 pass
-                # Empty(all_sprites, tiles_group, information[1] / 50,
+                # Empty(all_sprites, information[1] / 50,
                 #       information[2] / 50, tile_images['empty'])
             elif information[0] == "Wall":
-                Wall(all_sprites, tiles_group, walls_group, information[1] / 50,
+                Wall(all_sprites, walls_group, information[1] / 50,
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
                 px, py, id, stun = information[1], information[2], information[3], information[5]
@@ -102,7 +101,7 @@ def load_game(data, health=None):
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
 
 
-def ttg_level_num(scr, isst):
+def ttg_level_num(scr, isst=True):
     global online, ip, port
     try:
         # mode = str(input("Enter game mode(t/q): "))
@@ -134,52 +133,52 @@ def generate_level(level):  # наполнение уровня
             for x in range(len(level[y])):
                 if '.' in level[y][x]:
                     pass
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                 if '#' in level[y][x]:
-                    Wall(all_sprites, tiles_group, walls_group, x, y, tile_images['wall'])
+                    Wall(all_sprites, walls_group, x, y, tile_images['wall'])
                 if '@' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     player_x, player_y = x, y
                 if 'd' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, x, y, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[y][x]:
-                    #Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
-                    Hammer(all_sprites, tiles_group, x, y,
+                    #Empty(all_sprites, x, y, tile_images['empty'])
+                    Hammer(all_sprites, x, y,
                            load_image('warhammer.png', -1))
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
                 if '.' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     pass
                 if '#' in level[string_num][cell_num]:
-                    Wall(all_sprites, tiles_group, walls_group, string_num, cell_num, tile_images['wall'])
+                    Wall(all_sprites, walls_group, string_num, cell_num, tile_images['wall'])
                 if my_id in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     player_x, player_y = string_num, cell_num
                 if all_ids | set(level[string_num][cell_num]):
                     Player(string_num, cell_num)
                 if 'd' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, string_num, cell_num, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
-                    Hammer(all_sprites, tiles_group, string_num, cell_num,
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
+                    Hammer(all_sprites, string_num, cell_num,
                            load_image('warhammer.png', -1))
     # вернем игрока, а также размер поля в клетках
     # создание игрока
@@ -206,7 +205,7 @@ class Player(pygame.sprite.Sprite):
             # Создание молотка на 1 клетку перед игроком в направлении его последнего движения
             hammer_x = self.rect.x + self.last_moves[-1][0]
             hammer_y = self.rect.y + self.last_moves[-1][1]
-            hammer = Hammer(all_sprites, tiles_group, hammer_x // tile_width, hammer_y // tile_height,
+            hammer = Hammer(all_sprites, hammer_x // tile_width, hammer_y // tile_height,
                             load_image('warhammer.png', -1))
             # Применяем эффект оглушения к змеям вокруг молотка
             for snake in pygame.sprite.spritecollide(hammer, eg, False):
@@ -307,7 +306,7 @@ if __name__ == "__main__":
     # Выбор, загрузка уровня и безопасный выход в случае ошибки
     # (в будущем будет добавлено автоотправление письма-фидбека о баге)
     log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
-    db, player = ttg_level_num(screen, True)
+    db, player = ttg_level_num(screen)
     camera, clock = Camera(), pygame.time.Clock()
     # Главный Цикл
     time_delta = pygame.time.get_ticks()
@@ -322,7 +321,6 @@ if __name__ == "__main__":
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # делаем переменную, ссылающуюся на сокет сервера
         my_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)  # отключаем создание крупных пакетов
         # отключение алгоритма Нейгла
-        # ip = "213.21.51.48"
         my_socket.connect((ip, int(port)))
         my_id = first_connection(my_socket)
         all_ids.remove(my_id)
@@ -372,14 +370,14 @@ if __name__ == "__main__":
             camera.update(player)
             screen.blit(background_image, (0, 0))
             all_sprites.draw(screen)
-            enemy_group.draw(screen)
-            walls_group.draw(screen)
-            player_group.draw(screen)
+            # enemy_group.draw(screen)
+            # walls_group.draw(screen)
+            # player_group.draw(screen)
+            print(all_sprites.sprites())
 
             pygame.display.flip()
             clock.tick(FPS)
             # Обновление всех спрайтов
-            # if not online:
             for sprite in all_sprites:
                 if sprite in enemy_group:
                     sprite.update(walls_group)
@@ -427,7 +425,7 @@ if __name__ == "__main__":
 
             camera.update(player)
             screen.blit(background_image, (0, 0))
-            all_sprites.draw(screen)
+            diamonds_group.draw(screen)
             enemy_group.draw(screen)
             walls_group.draw(screen)
             player_group.draw(screen)
