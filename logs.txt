@@ -1,4 +1,3 @@
-[21:50]: level imported successful
-[21:50]: game start
-[21:50]: level imported successful
-[21:50]: player has damaged
+[22:25]: level imported successful
+[22:25]: game start
+[22:25]: level imported successful

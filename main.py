@@ -156,10 +156,7 @@ def generate_level(level):  # наполнение уровня
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[y][x]:
                     # Empty(all_sprites, x, y, tile_images['empty'])
-                    Hammer(all_sprites, x, y,
-                           load_image('warhammer.png', -1))
-                if '+' in level[y][x]:  # Если в уровне есть аптечка
-                    FirstAid(x, y)  # Создаем спрайт аптечки
+                    Hammer(all_sprites, x, y, load_image('warhammer.png', -1))
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
@@ -185,21 +182,10 @@ def generate_level(level):  # наполнение уровня
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[string_num][cell_num]:
                     # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
-                    Hammer(all_sprites, string_num, cell_num,
-                           load_image('warhammer.png', -1))
-                if '+' in level[string_num][cell_num]:
-                    FirstAid(string_num, cell_num)
+                    Hammer(all_sprites, string_num, cell_num, load_image('warhammer.png', -1))
     # вернем игрока, а также размер поля в клетках
     # создание игрока
     return Player(player_x, player_y)
-
-
-class FirstAid(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(first_aid_group, all_sprites)
-        self.image = load_image('health_pack.png', -1)
-        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, id=0, stun=0):
@@ -277,6 +263,13 @@ class Player(pygame.sprite.Sprite):
         return self.score
 
     def update(self, ph=0):
+        if pygame.sprite.spritecollideany(self, health_pack_group) and self.stun <= 0:
+            global player_hp
+            player_hp += 2  # Увеличиваем здоровье игрока на 2
+            for health_pack in pygame.sprite.spritecollide(self, health_pack_group, True):
+                health_pack.kill()
+            log_file.write(f"[{str(datetime.now())[11:16]}]: player picked up health pack\n")
+
         if pygame.sprite.spritecollideany(self, enemy_group) and self.stun <= 0:
             self.rect = self.rect.move(-self.last_moves[-1][0], -self.last_moves[-1][1])
             self.last_moves.remove(self.last_moves[-1])
@@ -435,13 +428,6 @@ if __name__ == "__main__":
                         db.save_game_vars(player_hp, player.score)
                     if event.key == pygame.K_e:
                         load_game(db.get_sprites_info())
-            # Обработка столкновений с аптечками
-            health_collisions = pygame.sprite.spritecollide(player, health_pack_group, True)
-            for health_pack in health_collisions:
-                player_hp += 2
-                if player_hp > 10:
-                    player_hp = 10
-                # Возможно, здесь нужно будет добавить анимацию или звук для эффекта подбора аптечки
 
             for sprite in all_sprites:
                 if not isinstance(sprite, PlayerHP):
