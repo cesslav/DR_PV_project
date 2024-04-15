@@ -115,7 +115,6 @@ class Camera:
         self.dx = -(target.rect.x + target.rect.w // 2 - self.width // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - self.height // 2)
 
-
     def save(self):
         return self.__class__.__name__, None, None, None, None, None, 1
 
@@ -250,3 +249,4 @@ class The_Observer(pygame.sprite.Sprite):
 
     def update(self):
         pass
+

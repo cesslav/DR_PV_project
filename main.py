@@ -5,7 +5,8 @@ from add_func import terminate, level_choose_screen, load_level, load_image, loa
 from datetime import datetime
 import pygame
 import socket
-# импорты необходимых библиотек и функций
+
+# Импорты необходимых библиотек и функций
 
 ip = 0
 port = 0
@@ -31,6 +32,9 @@ tile_width = tile_height = 50
 moves = {'x_move': 0,
          'y_move': 0,
          'bite': 0}
+# Создаем группу для спрайтов аптечек
+first_aid_group = pygame.sprite.Group()
+
 # создание групп спрайтов для более удобного обращения со спрайтами
 all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
@@ -128,6 +132,7 @@ def generate_level(level):  # наполнение уровня
     player_x = 0
     player_y = 0
     diamonds_left = 0
+    health_pack_created = False
     if isinstance(level[0], str):
         for y in range(len(level)):  # создание спрайтов уровня
             for x in range(len(level[y])):
@@ -150,9 +155,11 @@ def generate_level(level):  # наполнение уровня
                     # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[y][x]:
-                    #Empty(all_sprites, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     Hammer(all_sprites, x, y,
                            load_image('warhammer.png', -1))
+                if '+' in level[y][x]:  # Если в уровне есть аптечка
+                    FirstAid(x, y)  # Создаем спрайт аптечки
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
@@ -180,9 +187,18 @@ def generate_level(level):  # наполнение уровня
                     # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     Hammer(all_sprites, string_num, cell_num,
                            load_image('warhammer.png', -1))
+                if '+' in level[string_num][cell_num]:
+                    FirstAid(string_num, cell_num)
     # вернем игрока, а также размер поля в клетках
     # создание игрока
     return Player(player_x, player_y)
+
+
+class FirstAid(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(first_aid_group, all_sprites)
+        self.image = load_image('health_pack.png', -1)
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
 
 
 class Player(pygame.sprite.Sprite):
@@ -310,6 +326,7 @@ if __name__ == "__main__":
     camera, clock = Camera(), pygame.time.Clock()
     # Главный Цикл
     time_delta = pygame.time.get_ticks()
+    health_pack_group = pygame.sprite.Group()
     # load_sound("background.mp3")
     log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
     if not online:
@@ -418,6 +435,13 @@ if __name__ == "__main__":
                         db.save_game_vars(player_hp, player.score)
                     if event.key == pygame.K_e:
                         load_game(db.get_sprites_info())
+            # Обработка столкновений с аптечками
+            health_collisions = pygame.sprite.spritecollide(player, health_pack_group, True)
+            for health_pack in health_collisions:
+                player_hp += 2
+                if player_hp > 10:
+                    player_hp = 10
+                # Возможно, здесь нужно будет добавить анимацию или звук для эффекта подбора аптечки
 
             for sprite in all_sprites:
                 if not isinstance(sprite, PlayerHP):
