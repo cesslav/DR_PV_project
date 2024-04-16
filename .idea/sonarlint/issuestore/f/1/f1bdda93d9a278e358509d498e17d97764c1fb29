@@ -1,13 +1,15 @@
 
-”python:S1192–"NDefine a constant instead of duplicating this literal 'warhammer.png' 3 times.(«×—ç8êÌ†´ç1J$0a04b3f6-9b91-4554-a08c-3c96860ea171
-python:S1192K"KDefine a constant instead of duplicating this literal "snakes.png" 5 times.(™º¨¾8ßõò°ç1J$05dad62a-79ad-4f33-8391-28550a45921b
-™python:S3776+"TRefactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed.(ó‘§Ÿ8ßõò°ç1J$9f9872ba-2ad0-4cc8-b149-c3cd703d5268
-cpython:S1250"Remove this commented out code.(ÊæÃ…8ßõò°ç1J$b76e2c0e-2faf-4df0-9d99-6e8691ee9c26
-mpython:S1087")Either remove or fill this block of code.(ã‘Û¾8àõò°ç1J$33049b5e-daf5-4610-a86a-b5138ffe3fed
-upython:S5806>"+Rename this variable; it shadows a builtin.(†Çû£øÿÿÿÿ8àõò°ç1J$1270fa7b-3026-4e94-881d-a02df962758e
-hpython:S125f"Remove this commented out code.(›É–Øøÿÿÿÿ8ğÌ†´ç1J$63d908c0-c58c-40e2-8c99-f295dbb9ac5e
-™python:S3776y"TRefactor this function to reduce its Cognitive Complexity from 72 to the 15 allowed.(×ø’ï8ñÌ†´ç1J$8eecabd0-1f63-48be-b221-2b208dec9430
-npython:S108‚")Either remove or fill this block of code.(ã‘Û¾8òÌ†´ç1J$da8abfb9-fee7-41c1-805c-29be7834b59d
-špython:S3776Õ"TRefactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed.(‡à“‰8óÌ†´ç1J$04a08d75-0e39-4ba0-bfcc-e4803de8a467
-Ÿpython:S3776‚"TRefactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed.(û³å—ûÿÿÿÿ8ôÌ†´ç1J$67ac7aa6-233e-4ae7-87dc-24aeabf8f223
-‚python:S5754€"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8õÌ†´ç1J$58ebbfd8-0829-4cba-9c01-51c6fb89fed7
+npython:S1192Ÿ"NDefine a constant instead of duplicating this literal 'warhammer.png' 3 times.(—Šâ8·«ê™î1
+python:S1192P"KDefine a constant instead of duplicating this literal "snakes.png" 5 times.(™º¨¾8»­™î1J$0c59f09e-ce10-4e3e-aaaa-66d19b78c051
+™python:S3776."TRefactor this function to reduce its Cognitive Complexity from 29 to the 15 allowed.(ó‘§Ÿ8Ÿ»­™î1J$f1bff454-c423-4480-b225-5a620228001a
+cpython:S1253"Remove this commented out code.(ÊæÃ…8 »­™î1J$b5a8d37f-0245-469c-89ca-f6fb1d015ff4
+mpython:S1089")Either remove or fill this block of code.(ã‘Û¾8¡»­™î1J$e0a9a504-f733-4437-b99a-5e610f0b5391
+upython:S5806@"+Rename this variable; it shadows a builtin.(†Çû£øÿÿÿÿ8¡»­™î1J$8a9b0a45-ec2a-4bb8-ab72-f3b6d5a5df1a
+hpython:S125o"Remove this commented out code.(›É–Øøÿÿÿÿ8¢»­™î1J$6325718d-dc07-471f-a858-131198f23655
+}python:S1481‡"7Remove the unused local variable "health_pack_created".(¬Úñ„8¢»­™î1J$2d60af13-b90e-4cda-bc31-a85c601ac350
+špython:S3776‚"TRefactor this function to reduce its Cognitive Complexity from 72 to the 15 allowed.(×ø’ï8£»­™î1J$4b1499b7-1f39-43b3-96bc-70d58625cd89
+npython:S108Œ")Either remove or fill this block of code.(ã‘Û¾8£»­™î1J$75aab984-47ef-4a30-9b8b-3906cb145b22
+tpython:S3776Ü"TRefactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed.(‡à“‰8Ñ«ê™î1
+ypython:S3776‰"TRefactor this function to reduce its Cognitive Complexity from 22 to the 15 allowed.(û³å—ûÿÿÿÿ8Ñ«ê™î1
+>python:S125ÿ"Remove this commented out code.(·ØÙ8Ñ«ê™î1
+\python:S5754“"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8Ò«ê™î1
