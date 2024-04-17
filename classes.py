@@ -250,3 +250,13 @@ class The_Observer(pygame.sprite.Sprite):
     def update(self):
         pass
 
+
+class FirstAid(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, first_aid_group, all_sprites, img, tile_width=50):
+        super().__init__(first_aid_group, all_sprites)
+        self.image = img
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_width * pos_y)
+
+
+    def save(self):
+        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
