@@ -76,7 +76,6 @@ def close_player_connection(sock):
     players_sockets[sock][1].kill()
     players_sockets[sock][0].close()
     next_id.append(sock)
-    ids_to_delete.append(sock)
 
 
 def apply_players_moves(sock, eg, wg):
@@ -105,7 +104,7 @@ def give_answer(sock):
                 "ticks": pygame.time.get_ticks()}
         players_sockets[sock][0].send(json.dumps(data).encode())
     else:
-        close_player_connection(sock)
+        ids_to_delete.append(sock)
 
 
 def generate_level(level):  # наполнение уровня
@@ -173,12 +172,18 @@ camera = Camera()
 
 if __name__ == "__main__":
     while running:
-        # try:
+        try:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
             for i in ids_to_delete:
                 try:
+                    close_player_connection(i)
                     del players_sockets[i]
                 except Exception:
                     pass
+            ids_to_delete.clear()
 
             # блок проверки на наличие запросов на подключение
             try:
@@ -200,9 +205,7 @@ if __name__ == "__main__":
 
             # принимаем информацию от клиентов
             for socket in players_sockets:
-
                 try:
-                    print(socket)
                     apply_players_moves(socket, enemy_group, walls_group)
                 except Exception as e:
                     pass
@@ -210,14 +213,10 @@ if __name__ == "__main__":
             # отправляем ответ
             for socket in players_sockets:
                 try:
-                    if len(next_id) < 4:
-                        give_answer(socket)
+                    give_answer(socket)
                 except Exception as e:
                     print("can't give answer,", e)
-                    try:
-                        close_player_connection(socket)
-                    except Exception:
-                        pass
+                    ids_to_delete.append(socket)
 
             screen.fill((0, 0, 0))
             all_sprites.draw(screen)
@@ -225,9 +224,6 @@ if __name__ == "__main__":
             walls_group.draw(screen)
             player_group.draw(screen)
             pygame.display.flip()
-            #for sprite in all_sprites:
-            #    camera.apply(sprite, True)
-            # camera.update(observer)
             clock.tick(FPS)
-        # except Exception as e:
-        #     print("ERROR!", e)
+        except Exception as e:
+            print("ERROR!", e)

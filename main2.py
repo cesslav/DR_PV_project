@@ -386,11 +386,11 @@ if __name__ == "__main__":
 
             camera.update(player)
             screen.blit(background_image, (0, 0))
-            enemy_group.draw(screen)
-            walls_group.draw(screen)
+            # enemy_group.draw(screen)
+            # walls_group.draw(screen)
             player_group.draw(screen)
             for i in all_sprites:
-                if not isinstance(sprite, PlayerHP):
+                if not isinstance(i, PlayerHP):
                     screen.blit(tile_images[i.__class__.__name__.lower()], (i.rect.x, i.rect.y))
 
             pygame.display.flip()
