@@ -1,6 +1,6 @@
 import json
 import os
-from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
+from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer, FirstAid
 from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen, first_connection
 from datetime import datetime
 import pygame
@@ -79,6 +79,8 @@ def load_game(data, health=None):
                 GreenSnake(all_sprites, enemy_group, information[1] / 50, information[2] / 50,
                            load_image("snakes.png"), dirx=information[3], diry=information[4],
                            stun=information[5])
+            elif information[0] == "FirstAid":
+                FirstAid(information[1], information[2], first_aid_group, all_sprites, load_image('health_pack.png', -1))
         if not online:
             data = db.get_vars_info()
             score = 0
@@ -156,10 +158,9 @@ def generate_level(level):  # наполнение уровня
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[y][x]:
                     # Empty(all_sprites, x, y, tile_images['empty'])
-                    Hammer(all_sprites, x, y,
-                           load_image('warhammer.png', -1))
+                    Hammer(all_sprites, x, y, load_image('warhammer.png', -1))
                 if '+' in level[y][x]:  # Если в уровне есть аптечка
-                    FirstAid(x, y)  # Создаем спрайт аптечки
+                    FirstAid(x, y, first_aid_group, all_sprites, load_image('health_pack.png', -1))  # Создаем спрайт аптечки
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
@@ -185,21 +186,12 @@ def generate_level(level):  # наполнение уровня
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[string_num][cell_num]:
                     # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
-                    Hammer(all_sprites, string_num, cell_num,
-                           load_image('warhammer.png', -1))
+                    Hammer(all_sprites, string_num, cell_num, load_image('warhammer.png', -1))
                 if '+' in level[string_num][cell_num]:
-                    FirstAid(string_num, cell_num)
+                    FirstAid(string_num, cell_num, first_aid_group, all_sprites, load_image('health_pack.png', -1))
     # вернем игрока, а также размер поля в клетках
     # создание игрока
     return Player(player_x, player_y)
-
-
-class FirstAid(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(first_aid_group, all_sprites)
-        self.image = load_image('health_pack.png', -1)
-        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, id=0, stun=0):
@@ -260,6 +252,11 @@ class Player(pygame.sprite.Sprite):
                     self.score += 1
                     diamonds_left -= 1
                     log_file.write(f"[{str(datetime.now())[11:16]}]: player picked diamond\n")
+                if pygame.sprite.spritecollide(self, first_aid_group, True):
+                    hp += 2  # Увеличиваем здоровье игрока на 2
+                    for health_pack in pygame.sprite.spritecollide(self, health_pack_group, True):
+                        health_pack.kill()
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: player picked up health pack\n")
         return hp
 
     def apply_stun(self, duration):
@@ -386,11 +383,13 @@ if __name__ == "__main__":
 
             camera.update(player)
             screen.blit(background_image, (0, 0))
-            all_sprites.draw(screen)
-            # enemy_group.draw(screen)
-            # walls_group.draw(screen)
+            # all_sprites.draw(screen)
+            enemy_group.draw(screen)
+            walls_group.draw(screen)
             # player_group.draw(screen)
-            print(all_sprites.sprites())
+            # print(all_sprites.sprites())
+            for i in all_sprites:
+                screen.blit(i, (i.rect.x, i.rect.y))
 
             pygame.display.flip()
             clock.tick(FPS)
@@ -435,13 +434,6 @@ if __name__ == "__main__":
                         db.save_game_vars(player_hp, player.score)
                     if event.key == pygame.K_e:
                         load_game(db.get_sprites_info())
-            # Обработка столкновений с аптечками
-            health_collisions = pygame.sprite.spritecollide(player, health_pack_group, True)
-            for health_pack in health_collisions:
-                player_hp += 2
-                if player_hp > 10:
-                    player_hp = 10
-                # Возможно, здесь нужно будет добавить анимацию или звук для эффекта подбора аптечки
 
             for sprite in all_sprites:
                 if not isinstance(sprite, PlayerHP):
@@ -452,6 +444,7 @@ if __name__ == "__main__":
             diamonds_group.draw(screen)
             enemy_group.draw(screen)
             walls_group.draw(screen)
+            first_aid_group.draw(screen)
             player_group.draw(screen)
 
             if diamonds_left != 0:
