@@ -1,3 +1,19 @@
-[22:25]: level imported successful
-[22:25]: game start
-[22:25]: level imported successful
+[21:49]: level imported successful
+[21:49]: game start
+[21:49]: level imported successful
+[21:49]: player has damaged
+[21:49]: player picked up health pack
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player picked up health pack
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: player has damaged
+[21:49]: game over, player is dead
