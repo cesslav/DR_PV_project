@@ -233,6 +233,9 @@ class Hammer(pygame.sprite.Sprite):
         # Возможно, вам нужна какая-то логика обновления молотка
         pass
 
+    def save(self):
+        return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
+
 
 class The_Observer(pygame.sprite.Sprite):
     def __init__(self, all_sprites, img, pos_x=0, pos_y=0):

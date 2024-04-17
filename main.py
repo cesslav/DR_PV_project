@@ -21,12 +21,15 @@ last_data = {"player_info": ""}
 screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
 log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
+# tile_images['aidkit']
 tile_images = {
     'wall': load_image('box.png'),
-    'empty': load_image('grass.png'),
     'diamond': load_image('diamond.png', -1),
     'player': load_image('player.png', -1),
-    'enemy': load_image('player.png', -1)
+    'greensnake': load_image('greensnake.png', -1),
+    'aidkit': load_image("health_pack.png", -1),
+    'hammer': load_image("warhammer.png", -1),
+    'playerhp': load_image("hp.png", -1)
 }
 tile_width = tile_height = 50
 moves = {'x_move': 0,
@@ -61,7 +64,7 @@ def load_game(data, health=None):
                 Wall(all_sprites, walls_group, information[1] / 50,
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
-                px, py, id, stun = information[1], information[2], information[3], information[5]
+                px, py, id, stun = information[1] / 50, information[2] / 50, information[3], information[5]
                 print(my_id, id)
                 if stun > FPS * 2:
                     stun = FPS * 2
@@ -80,7 +83,7 @@ def load_game(data, health=None):
                            load_image("snakes.png"), dirx=information[3], diry=information[4],
                            stun=information[5])
             elif information[0] == "FirstAid":
-                FirstAid(information[1], information[2], first_aid_group, all_sprites, load_image('health_pack.png', -1))
+                FirstAid(information[1] / 50, information[2] / 50, first_aid_group, all_sprites, tile_images['aidkit'])
         if not online:
             data = db.get_vars_info()
             score = 0
@@ -160,7 +163,7 @@ def generate_level(level):  # наполнение уровня
                     # Empty(all_sprites, x, y, tile_images['empty'])
                     Hammer(all_sprites, x, y, load_image('warhammer.png', -1))
                 if '+' in level[y][x]:  # Если в уровне есть аптечка
-                    FirstAid(x, y, first_aid_group, all_sprites, load_image('health_pack.png', -1))  # Создаем спрайт аптечки
+                    FirstAid(x, y, first_aid_group, all_sprites, tile_images['aidkit'])  # Создаем спрайт аптечки
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
@@ -383,13 +386,12 @@ if __name__ == "__main__":
 
             camera.update(player)
             screen.blit(background_image, (0, 0))
-            # all_sprites.draw(screen)
             enemy_group.draw(screen)
             walls_group.draw(screen)
-            # player_group.draw(screen)
-            # print(all_sprites.sprites())
+            player_group.draw(screen)
             for i in all_sprites:
-                screen.blit(i, (i.rect.x, i.rect.y))
+                if not isinstance(sprite, PlayerHP):
+                    screen.blit(tile_images[i.__class__.__name__.lower()], (i.rect.x, i.rect.y))
 
             pygame.display.flip()
             clock.tick(FPS)

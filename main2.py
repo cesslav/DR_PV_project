@@ -1,11 +1,12 @@
 import json
 import os
-from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer
+from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer, FirstAid
 from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen, first_connection
 from datetime import datetime
 import pygame
 import socket
-# импорты необходимых библиотек и функций
+
+# Импорты необходимых библиотек и функций
 
 ip = 0
 port = 0
@@ -20,20 +21,25 @@ last_data = {"player_info": ""}
 screen = pygame.display.set_mode(SCREEN_SIZE)
 log_file = open("logs.txt", mode="w+")
 log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
+# tile_images['aidkit']
 tile_images = {
     'wall': load_image('box.png'),
-    'empty': load_image('grass.png'),
     'diamond': load_image('diamond.png', -1),
     'player': load_image('player.png', -1),
-    'enemy': load_image('player.png', -1)
+    'greensnake': load_image('greensnake.png', -1),
+    'aidkit': load_image("health_pack.png", -1),
+    'hammer': load_image("warhammer.png", -1),
+    'playerhp': load_image("hp.png", -1)
 }
 tile_width = tile_height = 50
 moves = {'x_move': 0,
          'y_move': 0,
          'bite': 0}
+# Создаем группу для спрайтов аптечек
+first_aid_group = pygame.sprite.Group()
+
 # создание групп спрайтов для более удобного обращения со спрайтами
 all_sprites = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 walls_group = pygame.sprite.Group()
@@ -52,13 +58,13 @@ def load_game(data, health=None):
         for information in data:
             if information[0] == "Empty":
                 pass
-                # Empty(all_sprites, tiles_group, information[1] / 50,
+                # Empty(all_sprites, information[1] / 50,
                 #       information[2] / 50, tile_images['empty'])
             elif information[0] == "Wall":
-                Wall(all_sprites, tiles_group, walls_group, information[1] / 50,
+                Wall(all_sprites, walls_group, information[1] / 50,
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
-                px, py, id, stun = information[1], information[2], information[3], information[5]
+                px, py, id, stun = information[1] / 50, information[2] / 50, information[3], information[5]
                 print(my_id, id)
                 if stun > FPS * 2:
                     stun = FPS * 2
@@ -76,6 +82,8 @@ def load_game(data, health=None):
                 GreenSnake(all_sprites, enemy_group, information[1] / 50, information[2] / 50,
                            load_image("snakes.png"), dirx=information[3], diry=information[4],
                            stun=information[5])
+            elif information[0] == "FirstAid":
+                FirstAid(information[1] / 50, information[2] / 50, first_aid_group, all_sprites, tile_images['aidkit'])
         if not online:
             data = db.get_vars_info()
             score = 0
@@ -102,7 +110,7 @@ def load_game(data, health=None):
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{e}'\n")
 
 
-def ttg_level_num(scr, isst):
+def ttg_level_num(scr, isst=True):
     global online, ip, port
     try:
         # mode = str(input("Enter game mode(t/q): "))
@@ -129,62 +137,64 @@ def generate_level(level):  # наполнение уровня
     player_x = 0
     player_y = 0
     diamonds_left = 0
+    health_pack_created = False
     if isinstance(level[0], str):
         for y in range(len(level)):  # создание спрайтов уровня
             for x in range(len(level[y])):
                 if '.' in level[y][x]:
                     pass
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                 if '#' in level[y][x]:
-                    Wall(all_sprites, tiles_group, walls_group, x, y, tile_images['wall'])
+                    Wall(all_sprites, walls_group, x, y, tile_images['wall'])
                 if '@' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     player_x, player_y = x, y
                 if 'd' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, x, y, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[y][x]:
-                    # Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
+                    # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[y][x]:
-                    #Empty(all_sprites, tiles_group, x, y, tile_images['empty'])
-                    Hammer(all_sprites, tiles_group, x, y,
-                           load_image('warhammer.png', -1))
+                    # Empty(all_sprites, x, y, tile_images['empty'])
+                    Hammer(all_sprites, x, y, load_image('warhammer.png', -1))
+                if '+' in level[y][x]:  # Если в уровне есть аптечка
+                    FirstAid(x, y, first_aid_group, all_sprites, tile_images['aidkit'])  # Создаем спрайт аптечки
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
                 if '.' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     pass
                 if '#' in level[string_num][cell_num]:
-                    Wall(all_sprites, tiles_group, walls_group, string_num, cell_num, tile_images['wall'])
+                    Wall(all_sprites, walls_group, string_num, cell_num, tile_images['wall'])
                 if my_id in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     player_x, player_y = string_num, cell_num
                 if all_ids | set(level[string_num][cell_num]):
                     Player(string_num, cell_num)
                 if 'd' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, string_num, cell_num, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[string_num][cell_num]:
-                    # Empty(all_sprites, tiles_group, string_num, cell_num, tile_images['empty'])
-                    Hammer(all_sprites, tiles_group, string_num, cell_num,
-                           load_image('warhammer.png', -1))
+                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
+                    Hammer(all_sprites, string_num, cell_num, load_image('warhammer.png', -1))
+                if '+' in level[string_num][cell_num]:
+                    FirstAid(string_num, cell_num, first_aid_group, all_sprites, load_image('health_pack.png', -1))
     # вернем игрока, а также размер поля в клетках
     # создание игрока
     return Player(player_x, player_y)
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, id=0, stun=0):
@@ -206,7 +216,7 @@ class Player(pygame.sprite.Sprite):
             # Создание молотка на 1 клетку перед игроком в направлении его последнего движения
             hammer_x = self.rect.x + self.last_moves[-1][0]
             hammer_y = self.rect.y + self.last_moves[-1][1]
-            hammer = Hammer(all_sprites, tiles_group, hammer_x // tile_width, hammer_y // tile_height,
+            hammer = Hammer(all_sprites, hammer_x // tile_width, hammer_y // tile_height,
                             load_image('warhammer.png', -1))
             # Применяем эффект оглушения к змеям вокруг молотка
             for snake in pygame.sprite.spritecollide(hammer, eg, False):
@@ -245,6 +255,11 @@ class Player(pygame.sprite.Sprite):
                     self.score += 1
                     diamonds_left -= 1
                     log_file.write(f"[{str(datetime.now())[11:16]}]: player picked diamond\n")
+                if pygame.sprite.spritecollide(self, first_aid_group, True):
+                    hp += 2  # Увеличиваем здоровье игрока на 2
+                    for health_pack in pygame.sprite.spritecollide(self, health_pack_group, True):
+                        health_pack.kill()
+                    log_file.write(f"[{str(datetime.now())[11:16]}]: player picked up health pack\n")
         return hp
 
     def apply_stun(self, duration):
@@ -307,10 +322,11 @@ if __name__ == "__main__":
     # Выбор, загрузка уровня и безопасный выход в случае ошибки
     # (в будущем будет добавлено автоотправление письма-фидбека о баге)
     log_file.write(f"[{str(datetime.now())[11:16]}]: game start\n")
-    db, player = ttg_level_num(screen, True)
+    db, player = ttg_level_num(screen)
     camera, clock = Camera(), pygame.time.Clock()
     # Главный Цикл
     time_delta = pygame.time.get_ticks()
+    health_pack_group = pygame.sprite.Group()
     # load_sound("background.mp3")
     log_file.write(f"[{str(datetime.now())[11:16]}]: level imported successful\n")
     if not online:
@@ -322,11 +338,11 @@ if __name__ == "__main__":
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # делаем переменную, ссылающуюся на сокет сервера
         my_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)  # отключаем создание крупных пакетов
         # отключение алгоритма Нейгла
-        # ip = "213.21.51.48"
         my_socket.connect((ip, int(port)))
         my_id = first_connection(my_socket)
-
+        all_ids.remove(my_id)
         my_id = int(my_id)
+        all_ids = set(all_ids)
 
         while running:
             for event in pygame.event.get():
@@ -370,16 +386,16 @@ if __name__ == "__main__":
 
             camera.update(player)
             screen.blit(background_image, (0, 0))
-
-            # all_sprites.draw(screen)
             enemy_group.draw(screen)
             walls_group.draw(screen)
             player_group.draw(screen)
+            for i in all_sprites:
+                if not isinstance(sprite, PlayerHP):
+                    screen.blit(tile_images[i.__class__.__name__.lower()], (i.rect.x, i.rect.y))
 
             pygame.display.flip()
             clock.tick(FPS)
             # Обновление всех спрайтов
-            # if not online:
             for sprite in all_sprites:
                 if sprite in enemy_group:
                     sprite.update(walls_group)
@@ -427,9 +443,10 @@ if __name__ == "__main__":
 
             camera.update(player)
             screen.blit(background_image, (0, 0))
-            all_sprites.draw(screen)
+            diamonds_group.draw(screen)
             enemy_group.draw(screen)
             walls_group.draw(screen)
+            first_aid_group.draw(screen)
             player_group.draw(screen)
 
             if diamonds_left != 0:
