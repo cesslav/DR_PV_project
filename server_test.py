@@ -1,10 +1,11 @@
-from classes import Wall, Diamond, Camera, GreenSnake, Hammer, The_Observer
-from add_func import load_image
-from main2 import Player
+from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer, The_Observer
+from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen
+from main import Player
+from datetime import datetime
 import pygame
 import json
 import socket
-import asyncio
+import time
 IP = "localhost"
 port = 9090
 
