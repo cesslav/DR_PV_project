@@ -1,1 +1,10 @@
-[00:21]: level imported successful
+[18:00]: level imported successful
+[18:00]: game start
+[18:00]: level imported successful
+[18:00]: player picked diamond
+[18:00]: player has damaged
+[18:00]: player has damaged
+[18:00]: player has damaged
+[18:00]: player has damaged
+[18:00]: player has damaged
+[18:00]: player picked up health pack
