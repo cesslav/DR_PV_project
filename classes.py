@@ -99,7 +99,7 @@ class Camera:
     def apply(self, obj, online):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
-
+        # print(obj.rect)
         if not online:
             if -1 > obj.rect.x:
                 obj.rect.x += self.width

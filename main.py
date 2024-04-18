@@ -29,7 +29,7 @@ tile_images = {
     'diamond': load_image('diamond.png', -1),
     'player': load_image('player.png', -1),
     'greensnake': load_image('greensnake.png', -1),
-    'aidkit': load_image("health_pack.png", -1),
+    'firstaid': load_image("health_pack.png", -1),
     'hammer': load_image("warhammer.png", -1),
     'playerhp': load_image("hp.png", -1)
 }
@@ -67,7 +67,7 @@ def load_game(data, health=None):
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
                 px, py, id, stun = information[1] / 50, information[2] / 50, information[3], information[5]
-                print(my_id, id)
+                # print(my_id, id)
                 if stun > FPS * 2:
                     stun = FPS * 2
                 if id == my_id:
@@ -85,7 +85,7 @@ def load_game(data, health=None):
                            load_image("snakes.png"), dirx=information[3], diry=information[4],
                            stun=information[5])
             elif information[0] == "FirstAid":
-                FirstAid(information[1] / 50, information[2] / 50, first_aid_group, all_sprites, tile_images['aidkit'])
+                FirstAid(information[1] / 50, information[2] / 50, first_aid_group, all_sprites, tile_images['firstaid'])
         if not online:
             data = db.get_vars_info()
             score = 0
@@ -101,7 +101,7 @@ def load_game(data, health=None):
         camera = Camera()
         hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
         if not online:
-            player.score = score
+            #     player.score = score
             player.extra_move(-150)
         if player is not None:
             return player, hp, pg
@@ -130,6 +130,7 @@ def ttg_level_num(scr, isst=True):
         bd = DBClass('saves.db')
         return bd, pl
     except Exception as f:
+        print(f)
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{f}'\n")
         return ttg_level_num(scr, False)
 
@@ -165,7 +166,7 @@ def generate_level(level):  # наполнение уровня
                     # Empty(all_sprites, x, y, tile_images['empty'])
                     Hammer(all_sprites, x, y, load_image('warhammer.png', -1))
                 if '+' in level[y][x]:  # Если в уровне есть аптечка
-                    FirstAid(x, y, first_aid_group, all_sprites, tile_images['aidkit'])  # Создаем спрайт аптечки
+                    FirstAid(x, y, first_aid_group, all_sprites, tile_images['firstaid'])  # Создаем спрайт аптечки
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
@@ -419,10 +420,15 @@ async def offline_loop():
 
         camera.update(player)
         screen.blit(background_image, (0, 0))
-        diamonds_group.draw(screen)
-        enemy_group.draw(screen)
-        walls_group.draw(screen)
-        first_aid_group.draw(screen)
+        # diamonds_group.draw(screen)
+        # enemy_group.draw(screen)
+        # walls_group.draw(screen)
+        # first_aid_group.draw(screen)
+        # player_group.draw(screen)
+        for i in all_sprites:
+            if not isinstance(i, PlayerHP):
+                screen.blit(tile_images[i.__class__.__name__.lower()], (i.rect.x, i.rect.y))
+
         player_group.draw(screen)
 
         if diamonds_left != 0:
