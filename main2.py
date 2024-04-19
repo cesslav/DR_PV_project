@@ -5,8 +5,10 @@ from add_func import terminate, level_choose_screen, load_level, load_image, loa
 from datetime import datetime
 import pygame
 import socket
+import asyncio
 
 # Импорты необходимых библиотек и функций
+
 
 ip = 0
 port = 0
@@ -27,7 +29,7 @@ tile_images = {
     'diamond': load_image('diamond.png', -1),
     'player': load_image('player.png', -1),
     'greensnake': load_image('greensnake.png', -1),
-    'aidkit': load_image("health_pack.png", -1),
+    'firstaid': load_image("health_pack.png", -1),
     'hammer': load_image("warhammer.png", -1),
     'playerhp': load_image("hp.png", -1)
 }
@@ -65,7 +67,7 @@ def load_game(data, health=None):
                      information[2] / 50, tile_images['wall'])
             elif information[0] == "Player":
                 px, py, id, stun = information[1] / 50, information[2] / 50, information[3], information[5]
-                print(my_id, id)
+                # print(my_id, id)
                 if stun > FPS * 2:
                     stun = FPS * 2
                 if id == my_id:
@@ -83,7 +85,7 @@ def load_game(data, health=None):
                            load_image("snakes.png"), dirx=information[3], diry=information[4],
                            stun=information[5])
             elif information[0] == "FirstAid":
-                FirstAid(information[1] / 50, information[2] / 50, first_aid_group, all_sprites, tile_images['aidkit'])
+                FirstAid(information[1] / 50, information[2] / 50, first_aid_group, all_sprites, tile_images['firstaid'])
         if not online:
             data = db.get_vars_info()
             score = 0
@@ -99,7 +101,7 @@ def load_game(data, health=None):
         camera = Camera()
         hp = PlayerHP(all_sprites, player_group, load_image("hp.png", -1))
         if not online:
-            player.score = score
+            #     player.score = score
             player.extra_move(-150)
         if player is not None:
             return player, hp, pg
@@ -128,6 +130,7 @@ def ttg_level_num(scr, isst=True):
         bd = DBClass('saves.db')
         return bd, pl
     except Exception as f:
+        print(f)
         log_file.write(f"[{str(datetime.now())[11:16]}]: program have error '{f}'\n")
         return ttg_level_num(scr, False)
 
@@ -163,7 +166,7 @@ def generate_level(level):  # наполнение уровня
                     # Empty(all_sprites, x, y, tile_images['empty'])
                     Hammer(all_sprites, x, y, load_image('warhammer.png', -1))
                 if '+' in level[y][x]:  # Если в уровне есть аптечка
-                    FirstAid(x, y, first_aid_group, all_sprites, tile_images['aidkit'])  # Создаем спрайт аптечки
+                    FirstAid(x, y, first_aid_group, all_sprites, tile_images['firstaid'])  # Создаем спрайт аптечки
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
@@ -310,6 +313,166 @@ class Player(pygame.sprite.Sprite):
         return ph
 
 
+async def online_loop():
+    global running, moves, player
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                moves = {'x_move': 0,
+                         'y_move': 0,
+                         'bite': -100}
+                my_socket.send(json.dumps(moves).encode())
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    moves['x_move'] = moves['x_move'] + 1
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    moves['x_move'] = moves['x_move'] - 1
+                if event.key == pygame.K_UP or event.key == pygame.K_w:
+                    moves['y_move'] = moves['y_move'] - 1
+                if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    moves['y_move'] = moves['y_move'] + 1
+                if event.key == pygame.K_SPACE:
+                    moves['bite'] = moves['bite'] + 1
+                if event.key == pygame.K_ESCAPE:
+                    moves['bite'] = moves['bite'] - 100
+        # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
+
+        try:
+            data = my_socket.recv(6144)
+            data = data.decode()
+            if data:
+                data = json.loads(data)
+                player, hp, pg = load_game(data["field"], data["player_info"][1])
+                player_group.add(player)
+                for i in pg:
+                    player_group.add(i)
+                data = last_data
+        except Exception as e:
+            data = last_data
+
+        for sprite in all_sprites:
+            if not isinstance(sprite, PlayerHP):
+                camera.apply(sprite, online)
+
+        camera.update(player)
+        screen.blit(background_image, (0, 0))
+        # enemy_group.draw(screen)
+        # walls_group.draw(screen)
+        for i in all_sprites:
+            if not isinstance(i, PlayerHP):
+                screen.blit(tile_images[i.__class__.__name__.lower()], (i.rect.x, i.rect.y))
+
+        player_group.draw(screen)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+        # Обновление всех спрайтов
+        for sprite in all_sprites:
+            if sprite in enemy_group:
+                sprite.update(walls_group)
+            elif sprite in player_group:
+                sprite.update(player_hp)
+            else:
+                sprite.update()
+        try:
+            my_socket.send(json.dumps(moves).encode())
+            moves = {'x_move': 0,
+                     'y_move': 0,
+                     'bite': 0}
+        except Exception:
+            pass
+
+        await asyncio.sleep(0)
+
+
+async def offline_loop():
+    global running, player_hp, time_delta, death_switch
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN and player_hp > 0 and diamonds_left > 0:
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    player_hp = player.move(50, 0, player_hp, enemy_group, walls_group, diamonds_group)
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    player_hp = player.move(-50, 0, player_hp, enemy_group, walls_group, diamonds_group)
+                if event.key == pygame.K_UP or event.key == pygame.K_w:
+                    player_hp = player.move(0, -50, player_hp, enemy_group, walls_group, diamonds_group)
+                if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    player_hp = player.move(0, 50, player_hp, enemy_group, walls_group, diamonds_group)
+                if event.key == pygame.K_SPACE:
+                    player.hammer_strike()
+                if event.key == pygame.K_ESCAPE:
+                    start_screen(screen, WIDTH, HEIGHT)
+                if event.key == pygame.K_q:
+                    db.clear_db()
+                    for sprite in all_sprites:
+                        if not isinstance(sprite, Camera) and not isinstance(sprite, PlayerHP):
+                            db.save_game_sprite(sprite.save())
+                    db.save_game_vars(player_hp, player.score)
+                if event.key == pygame.K_e:
+                    load_game(db.get_sprites_info())
+
+        for sprite in all_sprites:
+            if not isinstance(sprite, PlayerHP):
+                camera.apply(sprite, online)
+
+        camera.update(player)
+        screen.blit(background_image, (0, 0))
+        # diamonds_group.draw(screen)
+        # enemy_group.draw(screen)
+        # walls_group.draw(screen)
+        # first_aid_group.draw(screen)
+        # player_group.draw(screen)
+        for i in all_sprites:
+            if not isinstance(i, PlayerHP):
+                screen.blit(tile_images[i.__class__.__name__.lower()], (i.rect.x, i.rect.y))
+
+        player_group.draw(screen)
+
+        if diamonds_left != 0:
+            screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
+                                     True, pygame.Color('red')), (0, 25, 100, 10))
+        elif diamonds_left == 0:
+            screen.blit(font1.render(f"TIME {time_delta}",
+                                     True, pygame.Color('red')), (0, 25, 100, 10))
+            screen.blit(font2.render("YOU WIN!", True,
+                                     pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
+        if player_hp == 0 and diamonds_left != 0:
+            screen.blit(font2.render("Game Over", True,
+                                     pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
+            if death_switch:
+                pygame.mixer.music.stop()
+                s.play()
+                death_switch = False
+                log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
+
+        pygame.display.flip()
+        clock.tick(FPS)
+        # Обновление всех спрайтов
+
+        for sprite in all_sprites:
+            if sprite in enemy_group:
+                sprite.update(walls_group)
+            elif sprite in player_group:
+                sprite.update(player_hp)
+            else:
+                sprite.update()
+        player_hp = player.update(player_hp)
+        if diamonds_left == 0:
+            player.death()
+            if death_switch:
+                db.add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
+                log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is win\n")
+                log_file.write(f"[{str(datetime.now())[11:16]}]: game end "
+                               f"with time {(pygame.time.get_ticks() - time_delta) / 1000}\n")
+                death_switch = False
+                time_delta = (pygame.time.get_ticks() - time_delta) / 1000
+
+        await asyncio.sleep(0)
+
+
 if __name__ == "__main__":
     pygame.init()
     start_screen(screen, WIDTH, HEIGHT)  # Стартскрин для выбора уровня и предсказуемого начала игры.
@@ -343,150 +506,11 @@ if __name__ == "__main__":
         all_ids.remove(my_id)
         my_id = int(my_id)
         all_ids = set(all_ids)
+        asyncio.run(online_loop())
+        pygame.quit()
 
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                    moves = {'x_move': 0,
-                             'y_move': 0,
-                             'bite': -100}
-                    my_socket.send(json.dumps(moves).encode())
-                elif event.type == pygame.KEYUP:
-                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        moves['x_move'] = moves['x_move'] + 1
-                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                        moves['x_move'] = moves['x_move'] - 1
-                    if event.key == pygame.K_UP or event.key == pygame.K_w:
-                        moves['y_move'] = moves['y_move'] - 1
-                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        moves['y_move'] = moves['y_move'] + 1
-                    if event.key == pygame.K_SPACE:
-                        moves['bite'] = moves['bite'] + 1
-                    if event.key == pygame.K_ESCAPE:
-                        moves['bite'] = moves['bite'] - 100
-            # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
-
-            try:
-                data = my_socket.recv(6144)
-                data = data.decode()
-                if data:
-                    data = json.loads(data)
-                    player, hp, pg = load_game(data["field"], data["player_info"][1])
-                    player_group.add(player)
-                    for i in pg:
-                        player_group.add(i)
-                    data = last_data
-            except Exception as e:
-                data = last_data
-
-            for sprite in all_sprites:
-                if not isinstance(sprite, PlayerHP):
-                    camera.apply(sprite, online)
-
-            camera.update(player)
-            screen.blit(background_image, (0, 0))
-            # enemy_group.draw(screen)
-            # walls_group.draw(screen)
-            player_group.draw(screen)
-            for i in all_sprites:
-                if not isinstance(i, PlayerHP):
-                    screen.blit(tile_images[i.__class__.__name__.lower()], (i.rect.x, i.rect.y))
-
-            pygame.display.flip()
-            clock.tick(FPS)
-            # Обновление всех спрайтов
-            for sprite in all_sprites:
-                if sprite in enemy_group:
-                    sprite.update(walls_group)
-                elif sprite in player_group:
-                    sprite.update(player_hp)
-                else:
-                    sprite.update()
-            try:
-                my_socket.send(json.dumps(moves).encode())
-                moves = {'x_move': 0,
-                         'y_move': 0,
-                         'bite': 0}
-            except:
-                pass
     else:
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                if event.type == pygame.KEYDOWN and player_hp > 0 and diamonds_left > 0:
-                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        player_hp = player.move(50, 0, player_hp, enemy_group, walls_group, diamonds_group)
-                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                        player_hp = player.move(-50, 0, player_hp, enemy_group, walls_group, diamonds_group)
-                    if event.key == pygame.K_UP or event.key == pygame.K_w:
-                        player_hp = player.move(0, -50, player_hp, enemy_group, walls_group, diamonds_group)
-                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        player_hp = player.move(0, 50, player_hp, enemy_group, walls_group, diamonds_group)
-                    if event.key == pygame.K_SPACE:
-                        player.hammer_strike()
-                    if event.key == pygame.K_ESCAPE:
-                        start_screen(screen, WIDTH, HEIGHT)
-                    if event.key == pygame.K_q:
-                        db.clear_db()
-                        for sprite in all_sprites:
-                            if not isinstance(sprite, Camera) and not isinstance(sprite, PlayerHP):
-                                db.save_game_sprite(sprite.save())
-                        db.save_game_vars(player_hp, player.score)
-                    if event.key == pygame.K_e:
-                        load_game(db.get_sprites_info())
-
-            for sprite in all_sprites:
-                if not isinstance(sprite, PlayerHP):
-                    camera.apply(sprite, online)
-
-            camera.update(player)
-            screen.blit(background_image, (0, 0))
-            diamonds_group.draw(screen)
-            enemy_group.draw(screen)
-            walls_group.draw(screen)
-            first_aid_group.draw(screen)
-            player_group.draw(screen)
-
-            if diamonds_left != 0:
-                screen.blit(font1.render(f"TIME {(pygame.time.get_ticks() - time_delta) / 1000}",
-                                         True, pygame.Color('red')), (0, 25, 100, 10))
-            elif diamonds_left == 0:
-                screen.blit(font1.render(f"TIME {time_delta}",
-                                         True, pygame.Color('red')), (0, 25, 100, 10))
-                screen.blit(font2.render("YOU WIN!", True,
-                                         pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-            if player_hp == 0 and diamonds_left != 0:
-                screen.blit(font2.render("Game Over", True,
-                                         pygame.Color('red')), (WIDTH // 2 - 100, HEIGHT // 2 - 100, 100, 100))
-                if death_switch:
-                    pygame.mixer.music.stop()
-                    s.play()
-                    death_switch = False
-                    log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is dead\n")
-
-            pygame.display.flip()
-            clock.tick(FPS)
-            # Обновление всех спрайтов
-
-            for sprite in all_sprites:
-                if sprite in enemy_group:
-                    sprite.update(walls_group)
-                elif sprite in player_group:
-                    sprite.update(player_hp)
-                else:
-                    sprite.update()
-            player_hp = player.update(player_hp)
-            if diamonds_left == 0:
-                player.death()
-                if death_switch:
-                    db.add_to_leaderboard((pygame.time.get_ticks() - time_delta) / 1000, player.score)
-                    log_file.write(f"[{str(datetime.now())[11:16]}]: game over, player is win\n")
-                    log_file.write(f"[{str(datetime.now())[11:16]}]: game end "
-                                   f"with time {(pygame.time.get_ticks() - time_delta) / 1000}\n")
-                    death_switch = False
-                    time_delta = (pygame.time.get_ticks() - time_delta) / 1000
+        asyncio.run(offline_loop())
         # корректный выход из программы при завершении цикла
         pygame.quit()
 

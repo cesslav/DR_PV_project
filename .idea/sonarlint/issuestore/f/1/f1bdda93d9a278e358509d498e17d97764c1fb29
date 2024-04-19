@@ -1,14 +1,19 @@
 
-”python:S1192¤"NDefine a constant instead of duplicating this literal 'warhammer.png' 3 times.(—Šâ8Ñœ„ìî1J$e6ef3bbc-8be4-4bd5-b8e2-942a4914198e
-python:S1192S"KDefine a constant instead of duplicating this literal "snakes.png" 5 times.(™º¨¾8Ñœ„ìî1J$9b01005a-4085-41d6-a59c-3065e5277b88
-™python:S37761"TRefactor this function to reduce its Cognitive Complexity from 30 to the 15 allowed.(ó‘§Ÿ8Óœ„ìî1J$a8ed34f7-f1ef-476e-bfbf-02f6d9c8d57f
-cpython:S1256"Remove this commented out code.(ÊæÃ…8Óœ„ìî1J$3a61d127-3068-440e-8e12-3a990353dca3
-mpython:S108<")Either remove or fill this block of code.(ã‘Û¾8Õœ„ìî1J$abc6a27e-66dd-467e-9cb1-12c4c48fdcb0
-upython:S5806C"+Rename this variable; it shadows a builtin.(ÚíîŸúÿÿÿÿ8Õœ„ìî1J$37d3113f-108a-4b87-81dc-d43ff6764dd7
-hpython:S125t"Remove this commented out code.(›É–Øøÿÿÿÿ8Õœ„ìî1J$4698f89e-e174-4279-9561-942927c403ae
-}python:S1481Œ"7Remove the unused local variable "health_pack_created".(¬Úñ„8Õœ„ìî1J$dd68041f-4a64-4014-bddc-a3df7292f231
-špython:S3776‡"TRefactor this function to reduce its Cognitive Complexity from 80 to the 15 allowed.(×ø’ï8Õœ„ìî1J$bb15ccd1-8144-4e30-9003-9c5412ffbca6
-npython:S108‘")Either remove or fill this block of code.(ã‘Û¾8Õœ„ìî1J$11b1101f-0f6e-4fd8-a90e-4431e8a8654f
-špython:S3776å"TRefactor this function to reduce its Cognitive Complexity from 33 to the 15 allowed.(‡à“‰8Õœ„ìî1J$a4dcb64d-6273-41d4-adca-b7080480b79a
-Ÿpython:S3776—"TRefactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.(û³å—ûÿÿÿÿ8Õœ„ìî1J$bf00c806-363b-4e32-9699-f8d63a5cfce0
-‚python:S5754›"<Specify an exception class to catch or reraise the exception(ˆÊÉ·8Öœ„ìî1J$7c07c72f-384c-40d0-a9c2-297708306476
+”python:S1192"NDefine a constant instead of duplicating this literal 'warhammer.png' 3 times.(—Šâ8áÍº”ï1J$cee9458d-46eb-4faf-aa01-92a29e73f38a
+python:S1192U"KDefine a constant instead of duplicating this literal "snakes.png" 5 times.(™º¨¾8›ÿÀ“ï1J$1c59c9e1-a925-4cd6-a2c6-4e9456ed9032
+spython:S1481[")Remove the unused local variable "score".(…€ öüÿÿÿÿ8›ÿÀ“ï1J$ceb145e8-b255-4268-b356-da03b7db5d4a
+™python:S37763"TRefactor this function to reduce its Cognitive Complexity from 30 to the 15 allowed.(ó‘§Ÿ8œÿÀ“ï1J$dbf5baea-98e7-4c6e-a9b4-9dd732e0b5f2
+cpython:S1258"Remove this commented out code.(ÊæÃ…8œÿÀ“ï1J$ebbb8e3a-e491-441c-82d5-da58b84adc0c
+mpython:S108>")Either remove or fill this block of code.(ã‘Û¾8ÿÀ“ï1J$6d6192f4-1001-463f-81da-d40bd7858851
+upython:S5806E"+Rename this variable; it shadows a builtin.(ÚíîŸúÿÿÿÿ8ÿÀ“ï1J$293f4c0d-7401-4a0a-b2b9-5eb882e570a7
+cpython:S125h"Remove this commented out code.(â²¢±8ÿÀ“ï1J$7a2d10d9-4b9a-478a-bda9-77e9a602a146
+hpython:S125v"Remove this commented out code.(›É–Øøÿÿÿÿ8ÿÀ“ï1J$52b454ea-f61d-4e57-a5ee-c99a575c5579
+špython:S3776Š"TRefactor this function to reduce its Cognitive Complexity from 68 to the 15 allowed.(×ø’ï8ÿÀ“ï1J$f980e08b-c4c9-46e5-824c-b7b66decc3ea
+špython:S3776Õ"TRefactor this function to reduce its Cognitive Complexity from 33 to the 15 allowed.(‡à“‰8Â»”ï1J$98961449-82b4-40b7-bc08-85737f555576
+Ÿpython:S3776‡"TRefactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.(û³å—ûÿÿÿÿ8Â»”ï1J$d68c7591-3aae-4c2c-9486-c93ee7a386e7
+vpython:S1481Ç"0Replace the unused local variable "hp" with "_".(ÏôØ•8Ã»”ï1J$5e24f246-1091-4a1b-99bd-87ceaebb4e22
+ppython:S1481Ì"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ8Â»”ï1J$cd176251-e0a6-4e91-82d8-6ba6c95a9a00
+špython:S3776©"TRefactor this function to reduce its Cognitive Complexity from 61 to the 15 allowed.(¦ºàÈ8Ã»”ï1J$18a9a0b0-e7dc-4f26-970d-e9a9a2c7e103
+dpython:S125Õ"Remove this commented out code.(·ØÙ8ÿÀ“ï1J$eff12c0f-b769-4c75-ae92-29612e15410f
+špython:S3776ò"TRefactor this function to reduce its Cognitive Complexity from 89 to the 15 allowed.(şü©é8Ã»”ï1J$e585448b-6bd5-479e-91d6-e24d6ec4efca
+ipython:S125”"Remove this commented out code.(‘ÄÛúûÿÿÿÿ8Ã»”ï1J$ae5b390b-c306-48c8-93e5-c1575cdf2e7f

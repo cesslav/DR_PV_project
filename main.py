@@ -140,58 +140,39 @@ def generate_level(level):  # наполнение уровня
     player_x = 0
     player_y = 0
     diamonds_left = 0
-    health_pack_created = False
     if isinstance(level[0], str):
         for y in range(len(level)):  # создание спрайтов уровня
             for x in range(len(level[y])):
-                if '.' in level[y][x]:
-                    pass
-                    # Empty(all_sprites, x, y, tile_images['empty'])
                 if '#' in level[y][x]:
                     Wall(all_sprites, walls_group, x, y, tile_images['wall'])
                 if '@' in level[y][x]:
-                    # Empty(all_sprites, x, y, tile_images['empty'])
                     player_x, player_y = x, y
                 if 'd' in level[y][x]:
-                    # Empty(all_sprites, x, y, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, x, y, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[y][x]:
-                    # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[y][x]:
-                    # Empty(all_sprites, x, y, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, x, y, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[y][x]:
-                    # Empty(all_sprites, x, y, tile_images['empty'])
                     Hammer(all_sprites, x, y, load_image('warhammer.png', -1))
-                if '+' in level[y][x]:  # Если в уровне есть аптечка
+                if '+' in level[y][x]:
                     FirstAid(x, y, first_aid_group, all_sprites, tile_images['firstaid'])  # Создаем спрайт аптечки
     else:
         for string_num in range(len(level)):
             for cell_num in range(len(level[string_num])):
-                if '.' in level[string_num][cell_num]:
-                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
-                    pass
                 if '#' in level[string_num][cell_num]:
                     Wall(all_sprites, walls_group, string_num, cell_num, tile_images['wall'])
                 if my_id in level[string_num][cell_num]:
-                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     player_x, player_y = string_num, cell_num
-                if all_ids | set(level[string_num][cell_num]):
-                    Player(string_num, cell_num)
                 if 'd' in level[string_num][cell_num]:
-                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     Diamond(all_sprites, diamonds_group, string_num, cell_num, tile_images['diamond'])
                     diamonds_left += 1
                 if 'g' in level[string_num][cell_num]:
-                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='g')
                 if 'q' in level[string_num][cell_num]:
-                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     GreenSnake(all_sprites, enemy_group, string_num, cell_num, load_image("snakes.png"), snake_type='q')
                 if 'M' in level[string_num][cell_num]:
-                    # Empty(all_sprites, string_num, cell_num, tile_images['empty'])
                     Hammer(all_sprites, string_num, cell_num, load_image('warhammer.png', -1))
                 if '+' in level[string_num][cell_num]:
                     FirstAid(string_num, cell_num, first_aid_group, all_sprites, load_image('health_pack.png', -1))

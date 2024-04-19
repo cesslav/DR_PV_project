@@ -1,4 +1,6 @@
 
-‘python:S1192„"KDefine a constant instead of duplicating this literal "snakes.png" 4 times.(£‹Â8Ä˜Ûïî1J$d6cb70fe-51fb-4349-a4c6-908ff9f03f06
-™python:S3776n"TRefactor this function to reduce its Cognitive Complexity from 64 to the 15 allowed.(×ø’ï8Å˜Ûïî1J$35c8dcdf-2d37-4321-8e73-4536031a6632
-npython:S108")Either remove or fill this block of code.(ã‘Û¾8Æ˜Ûïî1J$f6dbec2f-5a32-4d72-a8b8-973e7cf90a6e
+‘python:S1192Œ"KDefine a constant instead of duplicating this literal "snakes.png" 4 times.(£‹Â8Æİæ·ï1J$2c3a901a-5963-4554-8e22-fd54f1f2f097
+|python:S1481‚"1Remove the unused local variable "diamonds_left".(¥¹–ııÿÿÿÿ8Çİæ·ï1J$27ba04cb-5ef2-4010-8b73-f4774bbe6274
+špython:S3776"TRefactor this function to reduce its Cognitive Complexity from 60 to the 15 allowed.(×ø’ï8Çİæ·ï1J$43218303-12fd-4299-8293-3a0680549c76
+{python:S1481¾"5Replace the unused local variable "address" with "_".(ö÷Ğí8Çİæ·ï1J$6354a964-2bbc-4f39-ac24-ec537cb8555d
+špython:S3776¬"TRefactor this function to reduce its Cognitive Complexity from 31 to the 15 allowed.(‰¸¯¯8Çİæ·ï1J$33680754-3285-40ec-bcf7-e5e5d96daf4a
