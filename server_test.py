@@ -162,6 +162,27 @@ def generate_level(level):  # наполнение уровня
                     FirstAid(string_num, cell_num, first_aid_group, all_sprites, load_image('health_pack.png', -1))
 
 
+def save_server_info():
+    sprites = []
+    players = []
+    for i in all_sprites:
+        if not isinstance(i, The_Observer):
+            sprites.append(i.save())
+
+    for i in players_sockets:
+        players.append(players_sockets[i])
+
+    with open("server_info.txt", mode="w+") as info:
+        info.write(f'{IP}\n'
+                   f'{main_server_port}\n'
+                   f'{sprites}\n'
+                   f'{pygame.time.get_ticks()}\n'
+                   f'{FPS}\n'
+                   f'{next_id}\n'
+                   f'{players}')
+
+
+
 pygame.init()
 running, clock = True, pygame.time.Clock()
 generate_level(FIELD)
@@ -226,6 +247,8 @@ async def main():
             first_aid_group.draw(screen)
             pygame.display.flip()
             clock.tick(FPS)
+
+            save_server_info()
         except Exception as e:
             print("ERROR!", e)
 
@@ -235,4 +258,4 @@ async def main():
 # async def run_web():
 
 run(main())
-app.run(host=IP, port=web_site_port)
+# app.run(host=IP, port=web_site_port)
