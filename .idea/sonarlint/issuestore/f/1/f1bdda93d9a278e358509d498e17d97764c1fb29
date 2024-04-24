@@ -11,8 +11,8 @@ hpython:S125v"Remove this commented out code.(›É–Øøÿÿÿÿ8øœÑ¶ğ1J$27ef75a1-21
 špython:S3776Š"TRefactor this function to reduce its Cognitive Complexity from 68 to the 15 allowed.(×ø’ï8ùœÑ¶ğ1J$eec5ca7e-69eb-4bf5-958e-12e4d09f977d
 špython:S3776Õ"TRefactor this function to reduce its Cognitive Complexity from 33 to the 15 allowed.(‡à“‰8ùœÑ¶ğ1J$2fc64d44-fd28-4331-a40c-b59241143877
 Ÿpython:S3776‡"TRefactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.(û³å—ûÿÿÿÿ8ùœÑ¶ğ1J$b7121bd5-2a81-413d-bda2-abf5141ff839
-vpython:S1481Ç"0Replace the unused local variable "hp" with "_".(ÏôØ•8ùœÑ¶ğ1J$5bcf7a56-38d3-44ef-8bf5-d3882d76a90e
 ppython:S1481Ë"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ8ùœÑ¶ğ1J$ea0ff5d5-50ad-4b70-a4d2-3d09a2a2da41
+vpython:S1481Ç"0Replace the unused local variable "hp" with "_".(ÏôØ•8ùœÑ¶ğ1J$5bcf7a56-38d3-44ef-8bf5-d3882d76a90e
 špython:S3776©"TRefactor this function to reduce its Cognitive Complexity from 61 to the 15 allowed.(¦ºàÈ8ùœÑ¶ğ1J$df1242e3-0626-4504-847e-450e05c34db8
 dpython:S125Ô"Remove this commented out code.(·ØÙ8úœÑ¶ğ1J$46b1c83c-8115-4111-b4c0-9828c2f9d3a3
 špython:S3776ñ"TRefactor this function to reduce its Cognitive Complexity from 89 to the 15 allowed.(şü©é8—Ñ¶ğ1J$a109b3ff-b756-4131-b9b8-ba4107315928
