@@ -1,19 +1,19 @@
 
-”python:S1192"NDefine a constant instead of duplicating this literal 'warhammer.png' 3 times.(—Šâ8áÍº”ï1J$cee9458d-46eb-4faf-aa01-92a29e73f38a
-python:S1192U"KDefine a constant instead of duplicating this literal "snakes.png" 5 times.(™º¨¾8›ÿÀ“ï1J$1c59c9e1-a925-4cd6-a2c6-4e9456ed9032
-spython:S1481[")Remove the unused local variable "score".(…€ öüÿÿÿÿ8›ÿÀ“ï1J$ceb145e8-b255-4268-b356-da03b7db5d4a
-™python:S37763"TRefactor this function to reduce its Cognitive Complexity from 30 to the 15 allowed.(ó‘§Ÿ8œÿÀ“ï1J$dbf5baea-98e7-4c6e-a9b4-9dd732e0b5f2
-cpython:S1258"Remove this commented out code.(ÊæÃ…8œÿÀ“ï1J$ebbb8e3a-e491-441c-82d5-da58b84adc0c
-mpython:S108>")Either remove or fill this block of code.(ã‘Û¾8ÿÀ“ï1J$6d6192f4-1001-463f-81da-d40bd7858851
-upython:S5806E"+Rename this variable; it shadows a builtin.(ÚíîŸúÿÿÿÿ8ÿÀ“ï1J$293f4c0d-7401-4a0a-b2b9-5eb882e570a7
-cpython:S125h"Remove this commented out code.(â²¢±8ÿÀ“ï1J$7a2d10d9-4b9a-478a-bda9-77e9a602a146
-hpython:S125v"Remove this commented out code.(›É–Øøÿÿÿÿ8ÿÀ“ï1J$52b454ea-f61d-4e57-a5ee-c99a575c5579
-špython:S3776Š"TRefactor this function to reduce its Cognitive Complexity from 68 to the 15 allowed.(×ø’ï8ÿÀ“ï1J$f980e08b-c4c9-46e5-824c-b7b66decc3ea
-špython:S3776Õ"TRefactor this function to reduce its Cognitive Complexity from 33 to the 15 allowed.(‡à“‰8Â»”ï1J$98961449-82b4-40b7-bc08-85737f555576
-Ÿpython:S3776‡"TRefactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.(û³å—ûÿÿÿÿ8Â»”ï1J$d68c7591-3aae-4c2c-9486-c93ee7a386e7
-vpython:S1481Ç"0Replace the unused local variable "hp" with "_".(ÏôØ•8Ã»”ï1J$5e24f246-1091-4a1b-99bd-87ceaebb4e22
-ppython:S1481Ì"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ8Â»”ï1J$cd176251-e0a6-4e91-82d8-6ba6c95a9a00
-špython:S3776©"TRefactor this function to reduce its Cognitive Complexity from 61 to the 15 allowed.(¦ºàÈ8Ã»”ï1J$18a9a0b0-e7dc-4f26-970d-e9a9a2c7e103
-dpython:S125Õ"Remove this commented out code.(·ØÙ8ÿÀ“ï1J$eff12c0f-b769-4c75-ae92-29612e15410f
-špython:S3776ò"TRefactor this function to reduce its Cognitive Complexity from 89 to the 15 allowed.(şü©é8Ã»”ï1J$e585448b-6bd5-479e-91d6-e24d6ec4efca
-ipython:S125”"Remove this commented out code.(‘ÄÛúûÿÿÿÿ8Ã»”ï1J$ae5b390b-c306-48c8-93e5-c1575cdf2e7f
+”python:S1192"NDefine a constant instead of duplicating this literal 'warhammer.png' 3 times.(—Šâ8ğœÑ¶ğ1J$934e6df7-66ab-4ee3-b315-2115ddd7e24e
+python:S1192U"KDefine a constant instead of duplicating this literal "snakes.png" 5 times.(™º¨¾8óœÑ¶ğ1J$255e613f-ca83-41f1-ba22-b69d2982cabf
+spython:S1481[")Remove the unused local variable "score".(…€ öüÿÿÿÿ8ôœÑ¶ğ1J$0be604d4-9194-40c8-8122-ffd6525ed5de
+™python:S37763"TRefactor this function to reduce its Cognitive Complexity from 30 to the 15 allowed.(ó‘§Ÿ8ôœÑ¶ğ1J$c1d99cfa-9f4a-4b4f-93d3-2ceab73686cf
+cpython:S1258"Remove this commented out code.(ÊæÃ…8öœÑ¶ğ1J$2d8ae60b-bc2f-4e63-a33e-72fb1bb87e2c
+mpython:S108>")Either remove or fill this block of code.(ã‘Û¾8øœÑ¶ğ1J$2ce30afc-c09d-4d91-9b89-de02308d0645
+upython:S5806E"+Rename this variable; it shadows a builtin.(ÚíîŸúÿÿÿÿ8øœÑ¶ğ1J$3e1760d4-fe6b-4191-8a07-b2859ee62682
+cpython:S125h"Remove this commented out code.(â²¢±8øœÑ¶ğ1J$c9bbaea2-f8e9-471a-97e2-b95d8e443d1d
+hpython:S125v"Remove this commented out code.(›É–Øøÿÿÿÿ8øœÑ¶ğ1J$27ef75a1-212e-4e5f-96ac-051eb2ef5004
+špython:S3776Š"TRefactor this function to reduce its Cognitive Complexity from 68 to the 15 allowed.(×ø’ï8ùœÑ¶ğ1J$eec5ca7e-69eb-4bf5-958e-12e4d09f977d
+špython:S3776Õ"TRefactor this function to reduce its Cognitive Complexity from 33 to the 15 allowed.(‡à“‰8ùœÑ¶ğ1J$2fc64d44-fd28-4331-a40c-b59241143877
+Ÿpython:S3776‡"TRefactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.(û³å—ûÿÿÿÿ8ùœÑ¶ğ1J$b7121bd5-2a81-413d-bda2-abf5141ff839
+vpython:S1481Ç"0Replace the unused local variable "hp" with "_".(ÏôØ•8ùœÑ¶ğ1J$5bcf7a56-38d3-44ef-8bf5-d3882d76a90e
+ppython:S1481Ë"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ8ùœÑ¶ğ1J$ea0ff5d5-50ad-4b70-a4d2-3d09a2a2da41
+špython:S3776©"TRefactor this function to reduce its Cognitive Complexity from 61 to the 15 allowed.(¦ºàÈ8ùœÑ¶ğ1J$df1242e3-0626-4504-847e-450e05c34db8
+dpython:S125Ô"Remove this commented out code.(·ØÙ8úœÑ¶ğ1J$46b1c83c-8115-4111-b4c0-9828c2f9d3a3
+špython:S3776ñ"TRefactor this function to reduce its Cognitive Complexity from 89 to the 15 allowed.(şü©é8—Ñ¶ğ1J$a109b3ff-b756-4131-b9b8-ba4107315928
+ipython:S125“"Remove this commented out code.(‘ÄÛúûÿÿÿÿ8˜Ñ¶ğ1J$44f98710-a192-4324-bf25-a37634d08e51

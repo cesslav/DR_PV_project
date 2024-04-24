@@ -4,12 +4,16 @@ import pygame
 import json
 
 
-def first_connection(socket):
+def first_connection(socket, type="player"):
     try:
-        data = socket.recv(8192).decode()
-        data = json.loads(data)
-        my_id = str(data["player_info"][0])
-        return my_id
+        socket.send(json.dumps({"type": type}).encode())
+        if type == "player":
+            data = json.loads(socket.recv(8192).decode())
+            my_id = str(data["player_info"][0])
+            return my_id
+        else:
+            data = json.loads(socket.recv(3072).decode())
+            return data
     except Exception as e:
         print(e)
         return first_connection(socket)

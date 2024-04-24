@@ -320,7 +320,7 @@ async def online_loop():
         # Отрисовка всех спрайтов и надписей в нужном для корректного отображения порядке
 
         try:
-            data = my_socket.recv(6144)
+            data = my_socket.recv(3072)
             data = data.decode()
             if data:
                 data = json.loads(data)
@@ -328,9 +328,8 @@ async def online_loop():
                 player_group.add(player)
                 for i in pg:
                     player_group.add(i)
-                data = last_data
         except Exception as e:
-            data = last_data
+            pass
 
         for sprite in all_sprites:
             if not isinstance(sprite, PlayerHP):

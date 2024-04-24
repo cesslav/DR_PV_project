@@ -1,18 +1,12 @@
-from classes import DBClass, Wall, Diamond, Camera, PlayerHP, GreenSnake, Hammer, The_Observer, FirstAid
-from add_func import terminate, level_choose_screen, load_level, load_image, load_sound, start_screen
+from classes import Wall, Diamond, Camera, GreenSnake, Hammer, The_Observer, FirstAid
+from add_func import load_image
 from main import Player
-from datetime import datetime
 import pygame
 import json
 import socket
-from asyncio import run, sleep
-from flask import Flask
 
-app = Flask(__name__)
-
-IP = "localhost"
 main_server_port = 9090
-web_site_port = 9080
+IP = "localhost"
 
 # настройка сокета
 main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # делаем переменную, ссылающуюся на сокет сервера
@@ -20,11 +14,14 @@ main_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)  # отклю�
 # отключение алгоритма Нейгла
 main_socket.bind((IP, main_server_port))  # привязываем сокет к порту
 main_socket.setblocking(0)  # отключаем внеплановое ожидание пакетов от игроков
-main_socket.listen(4)  # включаем прослушку порта, выставляем ограничение на кол-во игроков
+main_socket.listen(10)  # включаем прослушку порта, выставляем ограничение на кол-во игроков
 
-next_id = [0, 1, 2, 3]
-ids_to_delete = []
+next_player_id = [0, 1, 2, 3, 4]
+next_web_id = [0, 1, 2, 3, 4]
+ids_to_pdelete = []
+ids_to_wdelete = []
 players_sockets = {}
+web_sockets = {}
 FPS = 50
 tile_images = {
     'wall': load_image('box.png'),
@@ -78,23 +75,10 @@ FIELD = [["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
          ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"]]
 
 
-@app.route('/')
-@app.route('/index')
-def mission_slogan():
-    fld = FIELD.copy()
-    for i in players_sockets:
-        fld[players_sockets[i][1].rect.x][players_sockets[i][1].rect.y] = "@"
-        print(fld)
-        print(FIELD)
-    return (f"IP: {IP}\n"
-            f"PORT: {main_server_port}\n"
-            f"")
-
-
 def close_player_connection(sock):
     players_sockets[sock][1].kill()
     players_sockets[sock][0].close()
-    next_id.append(sock)
+    next_player_id.append(sock)
 
 
 def apply_players_moves(sock, eg, wg):
@@ -123,7 +107,7 @@ def give_answer(sock):
                 "ticks": pygame.time.get_ticks()}
         players_sockets[sock][0].send(json.dumps(data).encode())
     else:
-        ids_to_delete.append(sock)
+        ids_to_pdelete.append(sock)
 
 
 def generate_level(level):  # наполнение уровня
@@ -178,44 +162,62 @@ def save_server_info():
                    f'{sprites}\n'
                    f'{pygame.time.get_ticks()}\n'
                    f'{FPS}\n'
-                   f'{next_id}\n'
+                   f'{next_player_id}\n'
                    f'{players}')
+
+        data = {"ip": IP,
+                "port": main_server_port,
+                # "sprites": sprites,
+                "life_time": pygame.time.get_ticks(),
+                "FPS": FPS,
+                "free_id": next_player_id,
+                "players": players}
+
+        return data
 
 
 
 pygame.init()
 running, clock = True, pygame.time.Clock()
 generate_level(FIELD)
-screen = pygame.display.set_mode((1000, 1000))
+screen = pygame.display.set_mode((550, 550))
 camera = Camera()
 
 
-async def main():
-    global running, ids_to_delete, next_id, players_sockets
+if __name__ == "__main__":
     while running:
         try:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
 
-            for i in ids_to_delete:
+            for i in ids_to_pdelete:
                 try:
                     close_player_connection(i)
                     del players_sockets[i]
                 except Exception:
                     pass
-            ids_to_delete.clear()
+            ids_to_pdelete.clear()
 
+            web_data = save_server_info()
             # блок проверки на наличие запросов на подключение
             try:
                 new_socket, address = main_socket.accept()
                 new_socket.setblocking(0)
-                # players_sockets.append(new_socket)
-                new_id = next_id.pop(0)
-                new_player = Player(1, 1, id=new_id)
-                players_sockets[new_id] = [new_socket, new_player, new_id, 10]  # socket, id, Class(x, y), hp
-                all_sprites.add(players_sockets[new_id][1])
+                data = json.loads(new_socket.recv(128).decode())
+                print(data)
+                if data["type"] == "player":
+                    # players_sockets.append(new_socket)
+                    new_id = next_player_id.pop(0)
+                    new_player = Player(1, 1, id=new_id)
+                    players_sockets[new_id] = [new_socket, new_player, new_id, 10]  # socket, id, Class(x, y), hp
+                    all_sprites.add(players_sockets[new_id][1])
+                elif data["type"] == "web":
+                    new_socket.send(json.dumps(web_data).encode())
+                    new_socket.close()
+                    print(web_data)
             except Exception as e:
+                # print(e)
                 pass
 
             for sprite in all_sprites:
@@ -237,7 +239,13 @@ async def main():
                     give_answer(socket)
                 except Exception as e:
                     print("can't give answer,", e)
-                    ids_to_delete.append(socket)
+                    ids_to_pdelete.append(socket)
+
+            for socket in web_sockets:
+                try:
+                    web_sockets[socket][0].send(json.dumps(web_data).encode())
+                except Exception as e:
+                    print(e)
 
             screen.fill((0, 0, 0))
             all_sprites.draw(screen)
@@ -248,14 +256,5 @@ async def main():
             pygame.display.flip()
             clock.tick(FPS)
 
-            save_server_info()
         except Exception as e:
             print("ERROR!", e)
-
-        # await sleep(0)
-
-
-# async def run_web():
-
-run(main())
-# app.run(host=IP, port=web_site_port)
