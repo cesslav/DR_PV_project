@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Авторизация</h1>
+<form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    <p>
+        {{ form.username.label }}<br>
+        {{ form.username(class="form-control") }}<br>
+        {% for error in form.username.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+
+    <p>
+        {{ form.password.label }}<br>
+        {{ form.password(class="form-control", type="password") }}<br>
+        {% for error in form.password.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+
+    <p>
+        {{ form.fourty_legzka.label }}<br>
+        {{ form.fourty_legzka(class="form-control", type="password") }}<br>
+        {% for error in form.fourty_legzka.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+
+    <p>
+        {{ form.email.label }}<br>
+        {{ form.email(class="form-control") }}<br>
+        {% for error in form.email.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+
+    <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
+
+    <p>
+        {{ form.phone_num.label }}<br>
+        {{ form.phone_num(class="form-control", type="password") }}<br>
+        {% for error in form.phone_num.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+
+    <p>
+        {{ form.sins.label }}<br>
+        {{ form.sins(class="form-control") }}<br>
+        {% for error in form.sins.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+
+    <p>{{ form.sell_my_soul() }} {{ form.sell_my_soul.label }}</p>
+
+    <p>{{ form.terms_of_use() }} {{ form.terms_of_use.label }}</p>
+
+    <p>class="form-group">
+            {{ form.submit(class="btn btn-primary")}}</p>
+</form>
+{% endblock %}

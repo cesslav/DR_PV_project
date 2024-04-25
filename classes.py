@@ -1,4 +1,7 @@
 import sqlite3
+from wtforms import *
+from wtforms.validators import *
+from flask_wtf import FlaskForm, recaptcha
 from datetime import datetime
 import pygame
 
@@ -263,3 +266,21 @@ class FirstAid(pygame.sprite.Sprite):
 
     def save(self):
         return self.__class__.__name__, self.rect.x, self.rect.y, None, None, None, 1
+
+
+class LoginForm(FlaskForm):
+    username = StringField('Логин', validators=[DataRequired()])
+    password = PasswordField('Пароль', validators=[DataRequired()])
+    fourty_legzka = PasswordField('Количество ножек сороканожки, пробегающей под ближней к '
+                                  'двери ножкой кровати в данный момент', validators=[DataRequired()])
+    email = EmailField('Адрес электронной почты', validators=[DataRequired()])
+    life_essay = TextAreaField("Краткое эссе-изложение о Вашей жизни",
+                               validators=[DataRequired(), Length(min=10000, message="Попробуйте передать ваши мысли более развёрнуто", )])
+    # maya_date = DateField("Дата ближайшего конца света по календарю Майя", format='%d-%m-%Y', validators=[DataRequired()])
+    remember_me = BooleanField('Запомнить меня')
+    phone_num = PasswordField('Номер телефона', validators=[DataRequired()])
+    sins = StringField('Количество грехов, отягчающих Вашу душу', validators=[DataRequired()])
+    sell_my_soul = BooleanField('Продать душу владыке моему, Сатане', validators=[DataRequired()])
+    terms_of_use = BooleanField('Я принимаю условия пользования сайтом(https://inlnk.ru/DBzzk2)', validators=[DataRequired()])
+    # recaptcha = recaptcha.RecaptchaField()
+    submit = SubmitField('Выйти')

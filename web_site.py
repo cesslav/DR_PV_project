@@ -1,10 +1,9 @@
 import json
 import socket
-from flask import Flask, render_template, redirect
-from flask_wtf import FlaskForm, recaptcha
+from flask import Flask, render_template, redirect  # , Markup
 import asyncio
-from wtforms import *
-from wtforms.validators import *
+from classes import LoginForm
+from add_func import first_connection
 
 ip, main_server_port, web_server_port = "localhost", 9090, 9080
 my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # делаем переменную, ссылающуюся на сокет сервера
@@ -13,33 +12,9 @@ my_socket.connect((ip, int(main_server_port)))
 app = Flask(__name__)
 data = "42"
 extra_data = "42"
-app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
-
-
-class LoginForm(FlaskForm):
-    username = StringField('Логин', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
-    fourty_legzka = PasswordField('Количество ножек сороканожки, пробегающей под ближней к '
-                                  'двери ножкой кровати в данный момент', validators=[DataRequired()])
-    email = EmailField('Адрес электронной почты', validators=[DataRequired()])
-    life_essay = TextAreaField("Краткое эссе-изложение о Вашей жизни",
-                               validators=[DataRequired(), Length(min=10000, message="Попробуйте передать ваши мысли более развёрнуто", )])
-    maya_date = DateField("Дата ближайшего конца света по календарю Майя", format='%d-%m-%Y', validators=[DataRequired()])
-    remember_me = BooleanField('Запомнить меня')
-    phone_num = PasswordField('Номер телефона', validators=[DataRequired()])
-    sins = StringField('Количество грехов, отягчающих Вашу душу', validators=[DataRequired()])
-    sell_my_soul = BooleanField('Продать душу владыке моему, Сатане', validators=[DataRequired()])
-    submit = SubmitField('Выйти')
-
-
-def first_connection(socket, type="player"):
-    try:
-        socket.send(json.dumps({"type": type}).encode())
-        data = json.loads(socket.recv(3072).decode())
-        return data
-    except Exception as e:
-        print(e)
-        return first_connection(socket)
+app.config['SECRET_KEY'] = 'secret_key'
+app.config['RECAPTCHA_PUBLIC_KEY'] = '6LdPoMYpAAAAAFc4nKB8BPwQ24j1y66prsP35aBp'
+app.config['RECAPTCHA_PRIVATE_KEY'] = '6LdPoMYpAAAAAC9epaQXHvREW2kXWlnsAdQW8ONN'
 
 
 @app.route('/')
@@ -77,12 +52,28 @@ async def async_get_data():
     return first_connection(my_socket, "web")
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
     form = LoginForm()
     if form.validate_on_submit():
-        return redirect('/success')
-    return render_template('login.html', title='Авторизация', form=form)
+        return redirect('/')
+    return render_template('login2.html', title='Авторизация', form=form)
+
+
+@app.route('/signup', methods=['GET', 'POST'])
+def logout():
+    form = LoginForm()
+    if form.validate_on_submit():
+        return redirect('/')
+    return render_template('login2.html', title='Регистрация', form=form)
+
+
+@app.route('/captcha')
+async def captcha():
+    try:
+        return render_template('captcha.html')
+    except Exception as e:
+        return extra_data
 
 
 app.run(host=ip, port=web_server_port)
